@@ -31,8 +31,7 @@ export class OpenRouterImageProvider implements ImageGenerationProvider {
           type: "text",
           text: input.negativePrompt.trim() ? `${input.prompt}\nAvoid: ${input.negativePrompt}` : input.prompt
         }]
-      }],
-      modalities: ["image", "text"]
+      }]
     });
 
     if (this.options.transport === "curl") return this.generateWithCurl(url, body);

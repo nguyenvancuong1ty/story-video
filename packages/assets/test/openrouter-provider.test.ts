@@ -9,9 +9,9 @@ it("decodes an OpenRouter chat image data URL into a PNG asset", async () => {
     expect(url).toBe("https://openrouter.ai/api/v1/chat/completions");
     expect(JSON.parse(String(init?.body))).toMatchObject({
       model: "image-model",
-      modalities: ["image", "text"],
       messages: [{ role: "user", content: [{ type: "text", text: "rome\nAvoid: text" }] }]
     });
+    expect(JSON.parse(String(init?.body))).not.toHaveProperty("modalities");
     expect(new Headers(init?.headers).get("authorization")).toBe("Bearer secret");
     return new Response(JSON.stringify({ choices: [{ message: { images: [{ image_url: { url: `data:image/png;base64,${Buffer.from("png").toString("base64")}` } }] } }] }));
   });
