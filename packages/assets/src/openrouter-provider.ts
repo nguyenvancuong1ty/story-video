@@ -23,7 +23,11 @@ export class OpenRouterImageProvider implements ImageGenerationProvider {
       })
     });
 
-    if (!response.ok) throw new Error(`OpenRouter image generation failed: ${response.status}`);
+    if (!response.ok) {
+      const errorPayload = (await response.json().catch(() => ({}))) as { error?: { message?: unknown }; message?: unknown };
+      const message = typeof errorPayload.error?.message === "string" ? errorPayload.error.message : typeof errorPayload.message === "string" ? errorPayload.message : "";
+      throw new Error(`OpenRouter image generation failed: ${response.status}${message ? `: ${message.slice(0, 500)}` : ""}`);
+    }
     const payload = (await response.json()) as { data?: Array<{ b64_json?: string }> };
     const b64Json = payload.data?.[0]?.b64_json;
     if (!b64Json) throw new Error("OpenRouter image generation returned no image data");

@@ -25,6 +25,6 @@ it("decodes OpenRouter b64_json into a PNG asset", async () => {
 });
 
 it("reports an image request failure without leaking credentials", async () => {
-  const provider = new OpenRouterImageProvider({ apiKey: "secret", model: "image-model" }, async () => new Response("no", { status: 429 }));
-  await expect(provider.generate({ prompt: "rome", negativePrompt: "", alphaRequired: false, aspectRatio: "9:16" })).rejects.toThrow("OpenRouter image generation failed: 429");
+  const provider = new OpenRouterImageProvider({ apiKey: "secret", model: "image-model" }, async () => new Response(JSON.stringify({ error: { message: "unsupported parameter: quality" } }), { status: 429 }));
+  await expect(provider.generate({ prompt: "rome", negativePrompt: "", alphaRequired: false, aspectRatio: "9:16" })).rejects.toThrow("OpenRouter image generation failed: 429: unsupported parameter: quality");
 });
