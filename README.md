@@ -8,4 +8,4 @@ Use Node 22 and pnpm 9.15.0. Copy `.env.example` to `.env`, then run `pnpm insta
 
 ## Verify fixtures
 
-Run `pnpm tsx scripts/run-pilot.ts --pilot rome-ja` to write an offline, source-traceable publishing package. See `docs/runbook.md` for stage recovery and MP4 verification.
+Run `pnpm tsx scripts/run-pilot.ts --pilot rome-ja` to write an offline, source-traceable publishing package. For a real-provider vertical slice, use Node 22, configure the provider variables in `.env`, start the local CapCut TTS service, then run `pnpm tsx scripts/run-pilot.ts --pilot rome-ja --credentialed`. It produces `out/rome-ja.mp4` and a source-traceable publishing package. See `docs/runbook.md` for provider startup, recovery, and MP4 verification.
