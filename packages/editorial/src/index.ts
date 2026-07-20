@@ -1,6 +1,7 @@
 export * from "./angle.js";
 export * from "./characters.js";
 export * from "./localization.js";
+export * from "./local-llm-provider.js";
 export * from "./provider.js";
 export * from "./script.js";
 export * from "./storyboard.js";

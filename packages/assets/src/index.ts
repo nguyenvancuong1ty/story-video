@@ -1,5 +1,6 @@
 export * from "./cache.js";
 export * from "./library.js";
+export * from "./openrouter-provider.js";
 export * from "./processing.js";
 export * from "./provider.js";
 export * from "./qa.js";
