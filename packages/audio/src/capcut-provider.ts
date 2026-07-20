@@ -13,7 +13,11 @@ export class CapCutTtsProvider implements TtsProvider {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ text: input.text, voice_index: this.options.voiceIndex, rate: this.options.rate })
     });
-    if (!response.ok) throw new Error(`CapCut TTS failed: ${response.status}`);
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => ({}))) as { error?: unknown };
+      const message = typeof payload.error === "string" ? payload.error : "";
+      throw new Error(`CapCut TTS failed: ${response.status}${message ? `: ${message.slice(0, 500)}` : ""}`);
+    }
     const bytes = Buffer.from(await response.arrayBuffer());
     if (bytes.length === 0) throw new Error("CapCut TTS returned empty audio");
     return { bytes, mimeType: response.headers.get("content-type") ?? "audio/mpeg", durationMs: this.options.durationMs };
