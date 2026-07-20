@@ -1,72 +1,26 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-
 import { expect, it } from "vitest";
-
-import type { LanguageModelProvider } from "../../editorial/src/provider.js";
 import type { ImageGenerationInput, ImageGenerationProvider, ImageGenerationResult } from "../../assets/src/provider.js";
 import type { TtsInput, TtsProvider, TtsResult } from "../../audio/src/provider.js";
+import type { LanguageModelProvider } from "../../editorial/src/provider.js";
 import { loadCredentialedConfig } from "../src/credentialed/config.js";
 import { runCredentialedRome } from "../src/credentialed/rome-run.js";
 
-class CountingImageProvider implements ImageGenerationProvider {
-  readonly calls: ImageGenerationInput[] = [];
+const fixturePng = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQImWNgYGD4DwABBAEA0e4RZQAAAABJRU5ErkJggg==", "base64");
+class ImageProvider implements ImageGenerationProvider { readonly calls: ImageGenerationInput[] = []; async generate(input: ImageGenerationInput): Promise<ImageGenerationResult> { this.calls.push(input); return { bytes: fixturePng, mimeType: "image/png", providerAssetId: String(this.calls.length) }; } }
+class TtsProviderFake implements TtsProvider { readonly calls: TtsInput[] = []; async synthesize(input: TtsInput): Promise<TtsResult> { this.calls.push(input); return { bytes: Buffer.from("audio"), mimeType: "audio/mpeg", durationMs: 12_000 }; } }
 
-  async generate(input: ImageGenerationInput): Promise<ImageGenerationResult> {
-    this.calls.push(input);
-    return { bytes: Buffer.from(`image-${this.calls.length}`), mimeType: "image/png", providerAssetId: `image-${this.calls.length}` };
-  }
-}
-
-class CountingTtsProvider implements TtsProvider {
-  readonly calls: TtsInput[] = [];
-
-  async synthesize(input: TtsInput): Promise<TtsResult> {
-    this.calls.push(input);
-    return { bytes: Buffer.from(`audio-${this.calls.length}`), mimeType: "audio/mpeg", durationMs: 10_000 };
-  }
-}
-
-it("builds six scenes and never requests more than six images", async () => {
-  const outputDirectory = await mkdtemp(join(tmpdir(), "ksvf-rome-"));
-  const imageProvider = new CountingImageProvider();
-  const ttsProvider = new CountingTtsProvider();
-  const prompts: string[] = [];
-  const languageModel: LanguageModelProvider = {
-    async generateStructured(input) {
-      prompts.push(input.user);
-      return input.schema.parse({
-        language: "ja-JP",
-        scenes: Array.from({ length: 6 }, (_, index) => ({ id: `scene-0${index + 1}`, narration: `ナレーション ${index + 1}` }))
-      });
-    }
-  };
-
+it("creates five Vietnamese beats with wide/detail layered shots", async () => {
+  const outputDirectory = await mkdtemp(join(tmpdir(), "ksvf-rome-")); const imageProvider = new ImageProvider(); const ttsProvider = new TtsProviderFake();
+  const languageModel: LanguageModelProvider = { async generateStructured(input) { return input.schema.parse({ language: "vi-VN", scenes: Array.from({ length: 5 }, (_, index) => ({ id: `beat-0${index + 1}`, narration: `Đây là lời dẫn tiếng Việt về La Mã số ${index + 1}, giải thích quyền lực, công dân, quân đội và di sản còn lại.` })) }); } };
   try {
-    await mkdir(join(outputDirectory, "assets"), { recursive: true });
-    await writeFile(join(outputDirectory, "assets", "scene-01.png"), "existing-image");
-
-    const result = await runCredentialedRome({
-      config: loadCredentialedConfig({ OPENROUTER_API_KEY: "secret", OPENROUTER_IMAGE_MODEL: "image-model" }),
-      languageModel,
-      imageProvider,
-      ttsProvider,
-      outputDirectory
-    });
-
-    expect(result.scenes).toHaveLength(6);
-    expect(result.imageArtifactIds).toHaveLength(6);
-    expect(result.generatedImageCount).toBe(5);
-    expect(imageProvider.calls).toHaveLength(5);
-    expect(ttsProvider.calls).toHaveLength(6);
-    expect(result.renderRequest.durationInFrames).toBe(1800);
-    expect(prompts[0]).toContain('{"language":"ja-JP","scenes":[{"id":"scene-01","narration":"…"}]}');
-    expect(result.scenes[0]?.scene.layers).toEqual(expect.arrayContaining([expect.objectContaining({ role: "primary", assetType: "generated-image" })]));
-    await expect(readFile(join(outputDirectory, "assets", "scene-01.png"), "utf8")).resolves.toBe("existing-image");
-    expect(result.finalArtifact.kind).toBe("PublishingPackage");
-    expect(result.traceFromRenderToSources).toContain("rome-ja-source-rome-foundation");
-  } finally {
-    await rm(outputDirectory, { recursive: true, force: true });
-  }
+    const result = await runCredentialedRome({ config: loadCredentialedConfig({ LOCAL_IMAGE_MODEL: "ag/gemini-3.1-flash-image" }), languageModel, imageProvider, ttsProvider, outputDirectory });
+    expect(result.beats).toHaveLength(5); expect(result.beats[0]?.shots.map((shot) => shot.id)).toEqual(["beat-01-wide", "beat-01-detail"]);
+    expect(result.beats.flatMap((beat) => beat.shots).every((shot) => shot.layers.map((layer) => layer.role).join(",") === "background,tertiary,secondary,primary,foreground")).toBe(true);
+    expect(imageProvider.calls).toHaveLength(25); expect(ttsProvider.calls).toHaveLength(5); expect(result.renderRequest.durationInFrames).toBe(1800); expect(result.finalArtifact.kind).toBe("PublishingPackage");
+    const second = await runCredentialedRome({ config: loadCredentialedConfig({ LOCAL_IMAGE_MODEL: "ag/gemini-3.1-flash-image" }), languageModel, imageProvider, ttsProvider, outputDirectory });
+    expect(second.beats).toHaveLength(5); expect(imageProvider.calls).toHaveLength(25);
+  } finally { await rm(outputDirectory, { recursive: true, force: true }); }
 });

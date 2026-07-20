@@ -57,7 +57,8 @@ No artificial image-count cap is applied.
 ### Shot and asset contract
 
 The runner creates five Vietnamese beats, each with a six-second wide shot and a six-second
-detail shot. Each shot has an explicit manifest:
+detail shot. The two shots reuse their beat's five source layers but change camera and timing.
+Each shot has an explicit manifest:
 
 - `background`: a 9:16 environment plate with paper texture and no main characters.
 - `primary`: a full-body hero cutout on a chroma-green background, later converted to alpha PNG.
@@ -67,8 +68,8 @@ detail shot. Each shot has an explicit manifest:
 For each asset, the manifest stores the source path, role, normalized x/y position, width,
 z-index, entry delay, and entrance direction. Generated character assets must request complete
 uncropped figures, clear silhouette, white paper outline, no text, no shadow, and a chroma-green
-background. A local image-processing step removes the chroma background and validates that output
-has an alpha channel. Existing valid asset files are reused on reruns.
+background. A local image-processing step removes the chroma background and writes a PNG with an
+alpha channel.
 
 ### Remotion composition
 
@@ -78,17 +79,17 @@ Role-specific entrance motions are staggered: the primary enters first with the 
 secondary layers follow, and tertiary layers move least. The background receives only a subtle
 camera move. All mock red cards and procedural black dots are removed.
 
-Shot durations come from the measured CapCut audio duration, with visual clips kept below seven
-seconds where practical. Captions remain Vietnamese and are positioned below the scene's ground
-line. A lightweight visual preview render is verified before the full 60-second export.
+Each beat is allocated twelve seconds as two six-second shots, matching the controlled 25--35-word
+narration target. Captions remain Vietnamese and are positioned below the scene's ground line. A
+lightweight visual preview render is verified before the full 60-second export.
 
 ## Error handling and verification
 
 - Provider tests cover the request body, Markdown data-URL decoding, and safe upstream errors.
 - Configuration tests cover defaults and missing local image configuration.
 - Image-processing tests cover chroma-green removal and alpha-channel validation.
-- Credentialed runner tests verify `rome-vi` narration is Vietnamese, creates a layered shot
-  manifest, and reuses existing image assets.
+- Credentialed runner tests verify `rome-vi` narration is Vietnamese and creates a layered shot
+  manifest with every required role.
 - Remotion tests verify real asset paths are rendered for each layer and the mock-card rendering
   path is absent.
 - A live smoke call confirms `ag/gemini-3.1-flash-image` returns an image through the local

@@ -1,27 +1,10 @@
-import type { RemotionScene } from "./types";
+import type { RemotionShot, RenderLayer, RunVideoProps } from "./types";
 
-export type RomeRunSource = {
-  scenes: Array<{ id: string; subtitle: string; imagePath: string; audioPath: string; scene: RemotionScene }>;
-};
+export type RomeRunSource = { beats: Array<{ id: string; subtitle: string; audioPath: string; shots: Array<{ id: string; durationInFrames: number; camera: RemotionShot["camera"]; layers: Array<Omit<RenderLayer, "assetPath"> & { assetPath: string }> }> }> };
 
-export type RomeRunScene = {
-  from: number;
-  durationInFrames: number;
-  imagePath: string;
-  audioPath: string;
-  subtitle: string;
-  scene: RemotionScene;
-};
-
-export type RomeVideoProps = { scenes: RomeRunScene[] };
-
-export const buildRomeVideoProps = (run: RomeRunSource): RomeVideoProps => ({
-  scenes: run.scenes.map((scene, index) => ({
-    from: index * 300,
-    durationInFrames: 300,
-    imagePath: `runs/rome-ja/assets/${scene.id}.png`,
-    audioPath: `runs/rome-ja/audio/${scene.id}.mp3`,
-    subtitle: scene.subtitle,
-    scene: scene.scene
+export const buildRomeVideoProps = (run: RomeRunSource): RunVideoProps => ({
+  beats: run.beats.map((beat, beatIndex) => ({
+    id: beat.id, from: beatIndex * 360, durationInFrames: 360, subtitle: beat.subtitle, audioPath: `runs/rome-vi/audio/${beat.id}.mp3`,
+    shots: beat.shots.map((shot, shotIndex) => ({ ...shot, from: shotIndex * 180, durationInFrames: 180, layers: shot.layers.map((layer) => ({ ...layer, assetPath: `runs/rome-vi/assets/${shot.id}/${layer.assetPath.split("/").at(-1)}` })) }))
   }))
 });
