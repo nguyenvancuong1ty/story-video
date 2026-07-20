@@ -1,6 +1,7 @@
 import { execFile } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import ffprobeInstaller from "@ffprobe-installer/ffprobe";
 
 const execFileAsync = promisify(execFile);
 
@@ -11,8 +12,10 @@ export type RenderProbeResult = {
 
 export type RenderProbe = (filePath: string) => Promise<RenderProbeResult>;
 
+export const resolveFfprobeExecutable = (environment: NodeJS.ProcessEnv = process.env): string => environment.FFPROBE_PATH?.trim() || ffprobeInstaller.path;
+
 const probeWithFfprobe: RenderProbe = async (filePath) => {
-  const { stdout } = await execFileAsync("ffprobe", ["-v", "error", "-show_entries", "stream=codec_type,width,height,r_frame_rate:format=duration", "-of", "json", filePath]);
+  const { stdout } = await execFileAsync(resolveFfprobeExecutable(), ["-v", "error", "-show_entries", "stream=codec_type,width,height,r_frame_rate:format=duration", "-of", "json", filePath]);
   return JSON.parse(stdout) as RenderProbeResult;
 };
 
