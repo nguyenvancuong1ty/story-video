@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 import { expect, it } from "vitest";
 
-import { FakeLanguageModelProvider } from "../../editorial/src/provider.js";
+import type { LanguageModelProvider } from "../../editorial/src/provider.js";
 import type { ImageGenerationInput, ImageGenerationProvider, ImageGenerationResult } from "../../assets/src/provider.js";
 import type { TtsInput, TtsProvider, TtsResult } from "../../audio/src/provider.js";
 import { loadCredentialedConfig } from "../src/credentialed/config.js";
@@ -32,10 +32,16 @@ it("builds six scenes and never requests more than six images", async () => {
   const outputDirectory = await mkdtemp(join(tmpdir(), "ksvf-rome-"));
   const imageProvider = new CountingImageProvider();
   const ttsProvider = new CountingTtsProvider();
-  const languageModel = new FakeLanguageModelProvider({
-    language: "ja-JP",
-    scenes: Array.from({ length: 6 }, (_, index) => ({ id: `scene-0${index + 1}`, narration: `ナレーション ${index + 1}` }))
-  });
+  const prompts: string[] = [];
+  const languageModel: LanguageModelProvider = {
+    async generateStructured(input) {
+      prompts.push(input.user);
+      return input.schema.parse({
+        language: "ja-JP",
+        scenes: Array.from({ length: 6 }, (_, index) => ({ id: `scene-0${index + 1}`, narration: `ナレーション ${index + 1}` }))
+      });
+    }
+  };
 
   try {
     const result = await runCredentialedRome({
@@ -52,6 +58,7 @@ it("builds six scenes and never requests more than six images", async () => {
     expect(imageProvider.calls).toHaveLength(6);
     expect(ttsProvider.calls).toHaveLength(6);
     expect(result.renderRequest.durationInFrames).toBe(1800);
+    expect(prompts[0]).toContain('{"language":"ja-JP","scenes":[{"id":"scene-01","narration":"…"}]}');
     expect(result.scenes[0]?.scene.layers).toEqual(expect.arrayContaining([expect.objectContaining({ role: "primary", assetType: "generated-image" })]));
     await expect(readFile(join(outputDirectory, "assets", "scene-01.png"), "utf8")).resolves.toBe("image-1");
     expect(result.finalArtifact.kind).toBe("PublishingPackage");

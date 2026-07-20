@@ -44,7 +44,7 @@ export const runCredentialedRome = async (input: CredentialedRomeInput): Promise
     promptTemplateRef: { id: "localized-script", version: 1 },
     language: "ja-JP",
     system: "Write a factual Japanese narration as strict JSON.",
-    user: "Create exactly six concise scenes about the fall of the Western Roman Empire. Use scene-01 through scene-06."
+    user: "Create exactly six concise Japanese scenes about the fall of the Western Roman Empire. Return only this JSON shape, with no Markdown and no extra keys: {\"language\":\"ja-JP\",\"scenes\":[{\"id\":\"scene-01\",\"narration\":\"…\"}]}. The scenes array must contain scene-01 through scene-06 in order; every item needs id and narration."
   });
   if (script.scenes.length !== sceneIds.length || script.scenes.some((scene, index) => scene.id !== sceneIds[index])) {
     throw new Error("local LLM must return six Rome scenes named scene-01 through scene-06");
