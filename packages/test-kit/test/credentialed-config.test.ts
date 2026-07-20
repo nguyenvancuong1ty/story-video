@@ -8,6 +8,7 @@ it("uses the approved local-provider defaults", () => {
   expect(loadCredentialedConfig(requiredEnvironment)).toMatchObject({
     localLlmBaseUrl: "http://localhost:20128/v1",
     localLlmModel: "cx/gpt-5.6-terra",
+    openRouterImageTransport: "curl",
     capcutTtsBaseUrl: "http://127.0.0.1:8765",
     capcutTtsVoiceIndex: 25,
     maxGeneratedImages: 10

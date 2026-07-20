@@ -4,6 +4,7 @@ export type CredentialedConfig = {
   openRouterApiKey: string;
   openRouterImageBaseUrl: string;
   openRouterImageModel: string;
+  openRouterImageTransport: "fetch" | "curl";
   capcutTtsBaseUrl: string;
   capcutTtsVoiceIndex: number;
   capcutTtsRate: string;
@@ -29,12 +30,18 @@ export const loadCredentialedConfig = (environment: Environment): CredentialedCo
   const capcutTtsVoiceIndex = Number(environment.CAPCUT_TTS_VOICE_INDEX ?? "25");
   if (!Number.isInteger(capcutTtsVoiceIndex) || capcutTtsVoiceIndex < 0) throw new Error("CAPCUT_TTS_VOICE_INDEX must be a non-negative integer");
 
+  const openRouterImageTransport = environment.OPENROUTER_IMAGE_TRANSPORT ?? "curl";
+  if (openRouterImageTransport !== "fetch" && openRouterImageTransport !== "curl") {
+    throw new Error("OPENROUTER_IMAGE_TRANSPORT must be fetch or curl");
+  }
+
   return {
     localLlmBaseUrl: trimTrailingSlash(environment.LOCAL_LLM_BASE_URL ?? "http://localhost:20128/v1"),
     localLlmModel: environment.LOCAL_LLM_MODEL ?? "cx/gpt-5.6-terra",
     openRouterApiKey: required("OPENROUTER_API_KEY"),
     openRouterImageBaseUrl: trimTrailingSlash(environment.OPENROUTER_IMAGE_BASE_URL ?? "https://openrouter.ai/api/v1"),
     openRouterImageModel: required("OPENROUTER_IMAGE_MODEL"),
+    openRouterImageTransport,
     capcutTtsBaseUrl: trimTrailingSlash(environment.CAPCUT_TTS_BASE_URL ?? "http://127.0.0.1:8765"),
     capcutTtsVoiceIndex,
     capcutTtsRate: environment.CAPCUT_TTS_RATE ?? "1.0",

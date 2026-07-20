@@ -53,7 +53,12 @@ const runCredentialedPilot = async (): Promise<string> => {
   const result = await runCredentialedRome({
     config,
     languageModel: new LocalOpenAiCompatibleProvider(config.localLlmBaseUrl, config.localLlmModel),
-    imageProvider: new OpenRouterImageProvider({ apiKey: config.openRouterApiKey, model: config.openRouterImageModel, baseUrl: config.openRouterImageBaseUrl }),
+    imageProvider: new OpenRouterImageProvider({
+      apiKey: config.openRouterApiKey,
+      model: config.openRouterImageModel,
+      baseUrl: config.openRouterImageBaseUrl,
+      transport: config.openRouterImageTransport
+    }),
     ttsProvider: new CapCutTtsProvider({ baseUrl: config.capcutTtsBaseUrl, voiceIndex: config.capcutTtsVoiceIndex, rate: config.capcutTtsRate, durationMs: 10_000 }),
     outputDirectory
   });
