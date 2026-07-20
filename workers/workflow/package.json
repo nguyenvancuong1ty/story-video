@@ -1,0 +1,13 @@
+{
+  "name": "@ksvf/workflow-worker",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "bullmq": "5.34.10"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  }
+}
