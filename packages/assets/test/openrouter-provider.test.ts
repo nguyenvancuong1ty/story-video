@@ -9,10 +9,11 @@ it("decodes OpenRouter b64_json into a PNG asset", async () => {
     expect(JSON.parse(String(init?.body))).toMatchObject({
       model: "image-model",
       n: 1,
-      output_format: "png",
-      background: "transparent",
-      quality: "low"
+      aspect_ratio: "9:16"
     });
+    expect(JSON.parse(String(init?.body))).not.toHaveProperty("quality");
+    expect(JSON.parse(String(init?.body))).not.toHaveProperty("output_format");
+    expect(JSON.parse(String(init?.body))).not.toHaveProperty("background");
     expect(new Headers(init?.headers).get("authorization")).toBe("Bearer secret");
     return new Response(JSON.stringify({ data: [{ b64_json: Buffer.from("png").toString("base64") }] }));
   });

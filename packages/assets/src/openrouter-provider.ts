@@ -27,10 +27,7 @@ export class OpenRouterImageProvider implements ImageGenerationProvider {
       model: this.options.model,
       prompt: input.negativePrompt.trim() ? `${input.prompt}\nAvoid: ${input.negativePrompt}` : input.prompt,
       n: 1,
-      aspect_ratio: input.aspectRatio,
-      output_format: "png",
-      background: input.alphaRequired ? "transparent" : "opaque",
-      quality: "low"
+      aspect_ratio: input.aspectRatio
     });
 
     if (this.options.transport === "curl") return this.generateWithCurl(url, body);
