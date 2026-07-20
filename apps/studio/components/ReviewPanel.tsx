@@ -1,0 +1,1 @@
+export const ReviewPanel = () => <section className="review-panel"><p className="eyebrow">Review Queue</p><div><strong>Sources & claims</strong><span>12 verified</span></div><div><strong>Character references</strong><span>1 awaiting approval</span></div><div><strong>Final render</strong><span>Not queued</span></div></section>;

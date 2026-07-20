@@ -2,7 +2,16 @@ node_modules/
 dist/
 coverage/
 .env
+.env.*
+!.env.example
 .worktrees/
 out/
 **/out/
 tmp/
+.next/
+.turbo/
+*.tsbuildinfo
+playwright-report/
+test-results/
+*.log
+.DS_Store

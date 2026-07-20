@@ -1,0 +1,1 @@
+export const ConfigPanel = () => <aside className="config-panel"><p className="eyebrow">Project</p><h1>Rome: Final Days</h1><dl><div><dt>Market</dt><dd>Japanese</dd></div><div><dt>Format</dt><dd>90s vertical</dd></div><div><dt>Style</dt><dd>Paper Collage v1</dd></div><div><dt>Truth policy</dt><dd>Factual</dd></div></dl></aside>;

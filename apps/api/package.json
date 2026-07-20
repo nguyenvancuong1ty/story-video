@@ -1,0 +1,14 @@
+{
+  "name": "@ksvf/api",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "fastify": "^5.2.1"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsx src/server.ts"
+  }
+}

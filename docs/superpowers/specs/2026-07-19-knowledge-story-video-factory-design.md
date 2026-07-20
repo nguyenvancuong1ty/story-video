@@ -16,8 +16,8 @@ Studio (React Flow) → API / Orchestrator → Workers → PostgreSQL + Object S
 |---|---|
 | `schemas` | Runtime validation and TypeScript contracts for all inputs and artifacts. |
 | `orchestration` | Stage dependencies, state transitions, retries, approvals, resume, and job dispatch. |
-| `research` | Fact packages, sources, claim confidence, disputes, and truth-policy checks. |
-| `editorial` | Angle selection, market localization, script, pronunciation notes, and director storyboard. |
+| `research` | Research-provider adapter, fact packages, sources, claim confidence, disputes, and truth-policy checks. |
+| `editorial` | Language-model adapter, angle selection, market localization, script, pronunciation notes, and director storyboard. |
 | `assets` | Asset planning, image-provider adapters, variants, processing, visual QA, library, and continuity. |
 | `audio` | Text normalization, pronunciation dictionaries, TTS adapters, audio processing, timing, and subtitles. |
 | `rendering` | Composition, motion presets, Remotion rendering, and technical media QA. |
@@ -27,7 +27,7 @@ Studio (React Flow) → API / Orchestrator → Workers → PostgreSQL + Object S
 
 - The backend, not browser state, is the execution source of truth.
 - Artifacts are immutable and versioned; derived artifacts link to every direct input artifact.
-- Providers are adapters. MVP configures one image and one TTS implementation without embedding provider assumptions in domain objects.
+- Providers are adapters. MVP configures research, language-model, image, and TTS implementations without embedding SDK assumptions in domain objects.
 - A failure in one asset or narration clip must not rerun independent completed children.
 - The user can enable optional review gates for localized script, character/reference assets, and final render. All other stages run without approval by default.
 - Every project has a `truthPolicy`. Alternate history carries an explicit fictional label in narration metadata and publishing output.
@@ -40,7 +40,8 @@ ProjectConfig
 → EditorialPackage
 → LocalizedScript
 → Storyboard
-├── AssetManifest → AssetVariants → ApprovedAssets
+├── AssetManifest (one job per generated layer) → AssetVariants → ApprovedAssets
+├── ResolvedStoryboard (layerId → approvedAssetId)
 └── AudioPlan → NarrationClips → TimedSubtitles
 → CompositionPackage
 → RenderPackage
@@ -72,20 +73,34 @@ Stages use `pending`, `running`, `awaiting_approval`, `completed`, `failed`, or 
 
 Image Generation and TTS fan out to per-asset and per-clip child jobs. The parent stage aggregates child status and supports targeted retry or replacement.
 
+## Research and Editorial Providers
+
+`research` owns `ResearchProvider.search(input): Promise<ResearchSource[]>`; each source records provider source ID, title, URL, excerpt, publication date when available, and retrieval timestamp. `editorial` owns `LanguageModelProvider.generateStructured<T>(input: StructuredPrompt<T>): Promise<T>`; every structured request supplies its Zod schema, prompt version, language, and model identifier.
+
+MVP configures `OpenAiWebSearchResearchProvider` and `OpenAiLanguageModelProvider`. `OPENAI_RESEARCH_MODEL` and `OPENAI_EDITORIAL_MODEL` are required, separately versioned environment settings; the selected provider and model are persisted in FactPackage, EditorialPackage, LocalizedScript, and DirectorStoryboard provenance. Research, verification, localization, scripting, and storyboard domain code depend only on these interfaces. Tests use fake providers and fixtures, never provider SDKs or credentials.
+
 ## Director Storyboard and Rendering
 
-Each scene must specify a narrative beat, primary subject, ordered layers, camera intent, entrance order, emotional beat, motion preset, subtitle safe area, and asset requirements. It is the single composition contract consumed by Remotion.
+Each scene must specify a narrative beat, primary subject, an ordered set of `SceneLayer` objects, camera plan, subtitle safe area, and asset requirements. A layer has a stable `id`, role, subject, source type, generation intent or selected asset, explicit layout, and independent motion timing. It is the single visual-intent contract consumed by Asset Planning and, after resolution, by Remotion.
 
-The renderer implements layered paper-collage: independent alpha assets, explicit z-index, background parallax, distinct primary/secondary/tertiary motion presets, staggered entrance, paper outlines, shadow, and scene-level text safe zones. It does not animate a single flattened image.
+`SceneLayer.role` is one of background, tertiary, secondary, primary, foreground, effect, or overlay. `assetType` is generated image, library image, SVG, text, or particle. Generated-image layers carry prompt intent, reference asset IDs, and a transparency requirement; every such layer produces one or more asset jobs keyed by its `sceneId` and `layerId`. For every generated-image layer, `AssetJob.alphaRequired` equals `generation.transparentBackground`, regardless of role. SVG, text, and particle layers use internal render assets and never call an image provider.
+
+Each layer owns its layout (`anchorX`, `anchorY`, `widthPercent`, `scale`, `rotation`, `zIndex`) and motion (`preset`, `startFrame`, optional `endFrame`, `intensity`). Each scene owns a camera plan with preset, direction, start/end scale, start/end X/Y, and easing. Rendering must execute these supplied values; it may validate them or provide documented defaults, but it must not select the motion language from a layer role.
+
+The storyboard remains immutable. Asset Planning produces an `AssetManifest`; approval produces a derived `ResolvedStoryboard` that binds every provider or library asset to its source `layerId`. `CompositionPackage` is built only from the approved `ResolvedStoryboard`, narration, and subtitle artifacts. This preserves a trace from every rendered layer to both the storyboard intent and its approved asset.
+
+The renderer implements layered paper-collage: independent alpha assets, explicit z-index, per-layer motion, camera transforms, paper outlines, shadow, and scene-level text safe zones. Internal SVG/CSS layers provide smoke, snow, dust, embers, paper grain, ink wipes, arrows, timelines, map routes, and labels without image generation. It does not animate a single flattened image.
 
 ## Image Pipeline
 
 ```text
-Storyboard → Asset Planner → Prompt Generator → Provider Adapter
-→ Variant Generation → Download/Alpha/Canvas Processing → Visual QA → Asset Library
+Storyboard SceneLayer[] → Asset Planner → AssetManifest
+→ Prompt Generator → Provider Adapter → Variant Generation
+→ Download/Alpha/Canvas Processing → Visual QA → ApprovedAssets
+→ ResolvedStoryboard
 ```
 
-Asset states are `PLANNED`, `PROMPT_READY`, `GENERATING`, `GENERATED`, `PROCESSING`, `VALIDATING`, `APPROVED`, and `FAILED`. Each asset records prompt and negative-prompt versions, references, provider/model, ratio, transparency requirement, cultural/period metadata, variant artifacts, and processing/QA results.
+Asset states are `PLANNED`, `PROMPT_READY`, `GENERATING`, `GENERATED`, `PROCESSING`, `VALIDATING`, `APPROVED`, and `FAILED`. Each asset records its source `sceneId` and `layerId`, prompt and negative-prompt versions, references, provider/model, ratio, transparency requirement, cultural/period metadata, variant artifacts, and processing/QA results.
 
 The Studio supports prompt edit, targeted regenerate, variant selection, character-master reference assignment, and library reuse. Processing validates resolution, removes backgrounds when necessary, trims transparent bounds, normalizes canvases, creates thumbnails, and preserves original output.
 

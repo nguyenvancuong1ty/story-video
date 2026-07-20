@@ -1,0 +1,25 @@
+:root { --ink:#211e19; --muted:#746b5e; --paper:#ede3cf; --paper-deep:#dfd0b6; --line:#b9a98d; --vermilion:#bd432f; --green:#2f7255; --panel:#f7f0e2; }
+* { box-sizing:border-box; }
+body { margin:0; min-width:320px; background:var(--paper); color:var(--ink); font-family:Georgia, "Times New Roman", serif; }
+button { font:inherit; }
+.studio-shell { min-height:100vh; padding:20px; background:linear-gradient(90deg,rgba(33,30,25,.035) 1px,transparent 1px),var(--paper); background-size:24px 24px; }
+.topbar { display:flex; justify-content:space-between; align-items:center; max-width:1680px; margin:0 auto 16px; padding:0 4px; }
+.topbar span { font-family:Arial,sans-serif; font-size:13px; color:var(--muted); }
+.eyebrow { margin:0 0 6px; font:700 10px/1.1 Arial,sans-serif; letter-spacing:0; text-transform:uppercase; color:var(--muted); }
+.system-status { display:flex; gap:8px; align-items:center; font:600 12px Arial,sans-serif; color:var(--green); }
+.system-status i { display:block; width:8px; height:8px; border-radius:50%; background:var(--green); }
+.studio-grid { display:grid; grid-template-columns:220px minmax(460px,1fr) 280px; gap:14px; max-width:1680px; min-height:calc(100vh - 88px); margin:0 auto; }
+.config-panel,.artifact-panel,.review-panel,.graph-panel { border:1px solid var(--line); background:rgba(247,240,226,.92); box-shadow:3px 4px 0 rgba(33,30,25,.12); }
+.config-panel,.artifact-panel,.review-panel { padding:18px; }
+.config-panel h1 { margin:0 0 24px; font-size:25px; line-height:1.05; }
+dl { margin:0; } dl div { display:grid; gap:3px; padding:12px 0; border-top:1px solid var(--line); } dt { font:700 10px Arial,sans-serif; text-transform:uppercase; color:var(--muted); } dd { margin:0; font-size:14px; }
+.graph-panel { display:flex; min-width:0; flex-direction:column; padding:16px; }
+.panel-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; } .panel-heading h2 { margin:0; font-size:22px; }
+.panel-heading button { border:1px solid var(--ink); padding:9px 13px; background:var(--vermilion); color:#fffaf0; cursor:pointer; } .panel-heading button:focus-visible { outline:3px solid var(--ink); outline-offset:2px; } .panel-heading button:disabled { opacity:.45; cursor:not-allowed; }
+.command-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:6px; } .command-actions button { text-transform:capitalize; }
+.notice { min-height:32px; padding:12px 0; color:var(--muted); font:12px Arial,sans-serif; }
+.flow-canvas { flex:1; min-height:620px; border:1px solid var(--line); background:#e5d9c2; }
+.workflow-node { width:190px; min-height:70px; padding:10px; border:1px solid var(--ink); background:var(--panel); box-shadow:3px 3px 0 rgba(33,30,25,.16); } .workflow-node strong { display:block; font:700 12px Arial,sans-serif; } .workflow-node span,.workflow-node small { display:inline-block; margin-top:7px; color:var(--muted); font:11px Arial,sans-serif; } .workflow-node small { float:right; } .status-running { border-color:var(--vermilion); box-shadow:3px 3px 0 rgba(189,67,47,.22); } .status-completed { border-color:var(--green); }
+.right-rail { display:grid; align-content:start; gap:14px; }.artifact-panel h2 { margin:0 0 8px; font-size:20px; }.stage-status { margin:0 0 16px; color:var(--vermilion); font:700 12px Arial,sans-serif; text-transform:uppercase; }.review-panel div { display:flex; justify-content:space-between; gap:8px; padding:12px 0; border-top:1px solid var(--line); font-size:13px; }.review-panel span { color:var(--muted); font:11px Arial,sans-serif; text-align:right; }
+@media (max-width:1050px) { .studio-grid { grid-template-columns:210px minmax(0,1fr); }.right-rail { grid-column:1 / -1; grid-template-columns:1fr 1fr; }.flow-canvas { min-height:520px; } }
+@media (max-width:720px) { .studio-shell { padding:10px; }.topbar { align-items:flex-start; gap:14px; }.studio-grid { grid-template-columns:1fr; }.config-panel { display:grid; grid-template-columns:1fr 1fr; gap:14px; }.config-panel h1 { margin:0; }.right-rail { grid-column:auto; grid-template-columns:1fr; }.flow-canvas { min-height:480px; } }
