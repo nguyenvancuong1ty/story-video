@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -44,6 +44,9 @@ it("builds six scenes and never requests more than six images", async () => {
   };
 
   try {
+    await mkdir(join(outputDirectory, "assets"), { recursive: true });
+    await writeFile(join(outputDirectory, "assets", "scene-01.png"), "existing-image");
+
     const result = await runCredentialedRome({
       config: loadCredentialedConfig({ OPENROUTER_API_KEY: "secret", OPENROUTER_IMAGE_MODEL: "image-model" }),
       languageModel,
@@ -54,13 +57,13 @@ it("builds six scenes and never requests more than six images", async () => {
 
     expect(result.scenes).toHaveLength(6);
     expect(result.imageArtifactIds).toHaveLength(6);
-    expect(result.generatedImageCount).toBe(6);
-    expect(imageProvider.calls).toHaveLength(6);
+    expect(result.generatedImageCount).toBe(5);
+    expect(imageProvider.calls).toHaveLength(5);
     expect(ttsProvider.calls).toHaveLength(6);
     expect(result.renderRequest.durationInFrames).toBe(1800);
     expect(prompts[0]).toContain('{"language":"ja-JP","scenes":[{"id":"scene-01","narration":"…"}]}');
     expect(result.scenes[0]?.scene.layers).toEqual(expect.arrayContaining([expect.objectContaining({ role: "primary", assetType: "generated-image" })]));
-    await expect(readFile(join(outputDirectory, "assets", "scene-01.png"), "utf8")).resolves.toBe("image-1");
+    await expect(readFile(join(outputDirectory, "assets", "scene-01.png"), "utf8")).resolves.toBe("existing-image");
     expect(result.finalArtifact.kind).toBe("PublishingPackage");
     expect(result.traceFromRenderToSources).toContain("rome-ja-source-rome-foundation");
   } finally {

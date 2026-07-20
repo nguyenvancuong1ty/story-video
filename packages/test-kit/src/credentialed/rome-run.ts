@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -84,7 +85,7 @@ export const runCredentialedRome = async (input: CredentialedRomeInput): Promise
     const cacheKey = computeAssetCacheKey(fingerprint);
     const assetId = `rome-ja-asset-${scene.id}`;
     const imagePath = join(assetsDirectory, `${scene.id}.png`);
-    if (budget.reserve(cacheKey) === "reserved") {
+    if (!existsSync(imagePath) && budget.reserve(cacheKey) === "reserved") {
       const image = await input.imageProvider.generate({ prompt: fingerprint.normalizedPrompt, negativePrompt: fingerprint.negativePrompt, alphaRequired: false, aspectRatio: "9:16" });
       await writeFile(imagePath, image.bytes);
       budget.commit(cacheKey, assetId);
