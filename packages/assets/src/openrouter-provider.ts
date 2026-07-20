@@ -5,8 +5,9 @@ import { promisify } from "node:util";
 import type { ImageGenerationInput, ImageGenerationProvider, ImageGenerationResult } from "./provider.js";
 
 type OpenRouterImageOptions = { apiKey: string; model: string; baseUrl?: string; transport?: "fetch" | "curl" };
-type CurlExecutor = (arguments_: string[]) => Promise<{ stdout: string }>;
+type CurlExecutor = (arguments_: string[], options: { maxBuffer: number }) => Promise<{ stdout: string }>;
 const execFileAsync = promisify(execFile);
+const curlMaxBuffer = 20 * 1024 * 1024;
 
 const errorMessage = (payload: unknown): string => {
   const value = payload as { error?: { message?: unknown }; message?: unknown };
@@ -17,7 +18,7 @@ export class OpenRouterImageProvider implements ImageGenerationProvider {
   constructor(
     private readonly options: OpenRouterImageOptions,
     private readonly fetcher: typeof fetch = fetch,
-    private readonly curlExecutor: CurlExecutor = async (arguments_) => execFileAsync("curl", arguments_)
+    private readonly curlExecutor: CurlExecutor = async (arguments_, options) => execFileAsync("curl", arguments_, options)
   ) {}
 
   async generate(input: ImageGenerationInput): Promise<ImageGenerationResult> {
@@ -52,7 +53,7 @@ export class OpenRouterImageProvider implements ImageGenerationProvider {
   private async generateWithCurl(url: string, body: string): Promise<ImageGenerationResult> {
     let stdout: string;
     try {
-      ({ stdout } = await this.curlExecutor(["--silent", "--show-error", "--fail-with-body", "--max-time", "120", "--request", "POST", url, "--header", `Authorization: Bearer ${this.options.apiKey}`, "--header", "content-type: application/json", "--data", body]));
+      ({ stdout } = await this.curlExecutor(["--silent", "--show-error", "--fail-with-body", "--max-time", "120", "--request", "POST", url, "--header", `Authorization: Bearer ${this.options.apiKey}`, "--header", "content-type: application/json", "--data", body], { maxBuffer: curlMaxBuffer }));
     } catch (error) {
       const responseText = typeof (error as { stdout?: unknown }).stdout === "string" ? (error as { stdout: string }).stdout : "";
       let payload: unknown = {};

@@ -29,16 +29,17 @@ it("reports an image request failure without leaking credentials", async () => {
 });
 
 it("uses curl transport when Node fetch is blocked by the image gateway", async () => {
-  const calls: string[][] = [];
+  const calls: Array<{ arguments_: string[]; maxBuffer?: number }> = [];
   const provider = new OpenRouterImageProvider(
     { apiKey: "secret", model: "image-model", transport: "curl" },
     fetch,
-    async (arguments_) => {
-      calls.push(arguments_);
+    async (arguments_, options) => {
+      calls.push({ arguments_, maxBuffer: options?.maxBuffer });
       return { stdout: JSON.stringify({ choices: [{ message: { images: [{ image_url: { url: `data:image/png;base64,${Buffer.from("png").toString("base64")}` } }] } }] }) };
     }
   );
 
   await expect(provider.generate({ prompt: "rome", negativePrompt: "", alphaRequired: false, aspectRatio: "9:16" })).resolves.toMatchObject({ bytes: Buffer.from("png") });
-  expect(calls[0]).toEqual(expect.arrayContaining(["--request", "POST", "https://openrouter.ai/api/v1/chat/completions"]));
+  expect(calls[0].arguments_).toEqual(expect.arrayContaining(["--request", "POST", "https://openrouter.ai/api/v1/chat/completions"]));
+  expect(calls[0].maxBuffer).toBeGreaterThan(1024 * 1024);
 });
