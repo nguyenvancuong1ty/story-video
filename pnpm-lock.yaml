@@ -24,6 +24,8 @@ importers:
         specifier: 0.33.5
         version: 0.33.5
 
+  packages/audio: {}
+
   packages/db:
     dependencies:
       drizzle-orm:
