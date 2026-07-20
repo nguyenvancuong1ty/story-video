@@ -2,7 +2,7 @@
 
 ## Goal
 
-Generate Rome visual assets through the local OpenAI-compatible gateway instead of OpenRouter.
+Generate a Vietnamese Rome test video through the local OpenAI-compatible gateway instead of OpenRouter.
 The gateway endpoint is `http://localhost:20128/v1` and the approved image model is
 `ag/gemini-3.1-flash-image`.
 
@@ -15,13 +15,14 @@ The response can exceed 1 MiB.
 
 ## Scope
 
-- Replace the OpenRouter-specific image request in the credentialed Rome runner with a
+- Replace the OpenRouter-specific image request in the credentialed `rome-vi` runner with a
   local chat-image provider.
 - Configure the local image endpoint and model independently from the local editorial LLM.
 - Remove OpenRouter credentials and the enforced ten-image budget from the credentialed
   configuration and runner.
-- Preserve CapCut TTS, the `cx/gpt-5.6-terra` editorial model, artifact lineage, rendering,
-  and generated-media reuse.
+- Generate the localized script, captions, and CapCut narration in Vietnamese (`vi-VN`), using
+  CapCut voice index `0` (`BV421_vivn_streaming`).
+- Preserve the `cx/gpt-5.6-terra` editorial model, artifact lineage, rendering, and generated-media reuse.
 
 ## Design
 
@@ -41,16 +42,18 @@ OpenRouter API key/model/base URL and image transport settings from the credenti
 
 ### Runner
 
-The Rome runner records the local image model in each asset artifact. It makes one image request
-per missing scene asset and reuses existing assets on reruns. No artificial image-count cap is
-applied. The visual beat/shot redesign from `vox-director` is deliberately a follow-up: this
-change establishes the local unlimited image backend first.
+The `rome-vi` runner records the local image model in each asset artifact. It asks the local
+editorial model for factual Vietnamese narration, then writes Vietnamese subtitles and narration
+clips. Image prompts remain English so the image model receives explicit visual art direction. It
+makes one image request per missing scene asset and reuses existing assets on reruns. No artificial
+image-count cap is applied. The visual beat/shot redesign from `vox-director` is deliberately a
+follow-up: this change establishes the local unlimited image backend first.
 
 ## Error handling and verification
 
 - Provider tests cover the request body, Markdown data-URL decoding, and safe upstream errors.
 - Configuration tests cover defaults and missing local image configuration.
-- Credentialed runner tests verify existing image assets are reused.
+- Credentialed runner tests verify `rome-vi` narration is Vietnamese and existing image assets are reused.
 - A live smoke call confirms `ag/gemini-3.1-flash-image` returns an image through the local
   endpoint, followed by a credentialed Rome render and `ffprobe` verification.
 
