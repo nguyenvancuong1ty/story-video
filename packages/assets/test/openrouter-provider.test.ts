@@ -4,18 +4,16 @@ import { expect, it } from "vitest";
 
 import { OpenRouterImageProvider } from "../src/openrouter-provider.js";
 
-it("decodes OpenRouter b64_json into a PNG asset", async () => {
-  const provider = new OpenRouterImageProvider({ apiKey: "secret", model: "image-model" }, async (_url, init) => {
+it("decodes an OpenRouter chat image data URL into a PNG asset", async () => {
+  const provider = new OpenRouterImageProvider({ apiKey: "secret", model: "image-model" }, async (url, init) => {
+    expect(url).toBe("https://openrouter.ai/api/v1/chat/completions");
     expect(JSON.parse(String(init?.body))).toMatchObject({
       model: "image-model",
-      n: 1,
-      aspect_ratio: "9:16"
+      modalities: ["image", "text"],
+      messages: [{ role: "user", content: [{ type: "text", text: "rome\nAvoid: text" }] }]
     });
-    expect(JSON.parse(String(init?.body))).not.toHaveProperty("quality");
-    expect(JSON.parse(String(init?.body))).not.toHaveProperty("output_format");
-    expect(JSON.parse(String(init?.body))).not.toHaveProperty("background");
     expect(new Headers(init?.headers).get("authorization")).toBe("Bearer secret");
-    return new Response(JSON.stringify({ data: [{ b64_json: Buffer.from("png").toString("base64") }] }));
+    return new Response(JSON.stringify({ choices: [{ message: { images: [{ image_url: { url: `data:image/png;base64,${Buffer.from("png").toString("base64")}` } }] } }] }));
   });
 
   await expect(provider.generate({ prompt: "rome", negativePrompt: "text", alphaRequired: true, aspectRatio: "9:16" })).resolves.toMatchObject({
@@ -37,10 +35,10 @@ it("uses curl transport when Node fetch is blocked by the image gateway", async 
     fetch,
     async (arguments_) => {
       calls.push(arguments_);
-      return { stdout: JSON.stringify({ data: [{ b64_json: Buffer.from("png").toString("base64") }] }) };
+      return { stdout: JSON.stringify({ choices: [{ message: { images: [{ image_url: { url: `data:image/png;base64,${Buffer.from("png").toString("base64")}` } }] } }] }) };
     }
   );
 
   await expect(provider.generate({ prompt: "rome", negativePrompt: "", alphaRequired: false, aspectRatio: "9:16" })).resolves.toMatchObject({ bytes: Buffer.from("png") });
-  expect(calls[0]).toEqual(expect.arrayContaining(["--request", "POST", "https://openrouter.ai/api/v1/images"]));
+  expect(calls[0]).toEqual(expect.arrayContaining(["--request", "POST", "https://openrouter.ai/api/v1/chat/completions"]));
 });

@@ -22,12 +22,17 @@ export class OpenRouterImageProvider implements ImageGenerationProvider {
 
   async generate(input: ImageGenerationInput): Promise<ImageGenerationResult> {
     const baseUrl = (this.options.baseUrl ?? "https://openrouter.ai/api/v1").replace(/\/+$/, "");
-    const url = `${baseUrl}/images`;
+    const url = `${baseUrl}/chat/completions`;
     const body = JSON.stringify({
       model: this.options.model,
-      prompt: input.negativePrompt.trim() ? `${input.prompt}\nAvoid: ${input.negativePrompt}` : input.prompt,
-      n: 1,
-      aspect_ratio: input.aspectRatio
+      messages: [{
+        role: "user",
+        content: [{
+          type: "text",
+          text: input.negativePrompt.trim() ? `${input.prompt}\nAvoid: ${input.negativePrompt}` : input.prompt
+        }]
+      }],
+      modalities: ["image", "text"]
     });
 
     if (this.options.transport === "curl") return this.generateWithCurl(url, body);
@@ -64,9 +69,10 @@ export class OpenRouterImageProvider implements ImageGenerationProvider {
   }
 
   private parseImagePayload(payload: unknown): ImageGenerationResult {
-    const data = payload as { data?: Array<{ b64_json?: string }> };
-    const b64Json = data.data?.[0]?.b64_json;
-    if (!b64Json) throw new Error("OpenRouter image generation returned no image data");
-    return { bytes: Buffer.from(b64Json, "base64"), mimeType: "image/png", providerAssetId: "openrouter-image-0" };
+    const response = payload as { choices?: Array<{ message?: { images?: Array<{ image_url?: { url?: string } }> } }> };
+    const imageUrl = response.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    const dataUrl = imageUrl?.match(/^data:([^;,]+);base64,(.+)$/s);
+    if (!dataUrl) throw new Error("OpenRouter chat image generation returned no base64 image data");
+    return { bytes: Buffer.from(dataUrl[2], "base64"), mimeType: dataUrl[1], providerAssetId: "openrouter-image-0" };
   }
 }
