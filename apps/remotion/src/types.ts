@@ -14,4 +14,6 @@ export type RemotionScene = {
   layers: RenderLayer[];
 };
 
-export type VideoProps = { scene: RemotionScene; audioPath?: string };
+export type FixtureVideoProps = { scene: RemotionScene; audioPath?: string };
+export type RunVideoProps = { scenes: Array<{ from: number; durationInFrames: number; imagePath: string; audioPath: string; subtitle: string; scene: RemotionScene }> };
+export type VideoProps = FixtureVideoProps | RunVideoProps;

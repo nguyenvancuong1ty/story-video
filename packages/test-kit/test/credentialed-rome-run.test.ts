@@ -52,6 +52,7 @@ it("builds six scenes and never requests more than six images", async () => {
     expect(imageProvider.calls).toHaveLength(6);
     expect(ttsProvider.calls).toHaveLength(6);
     expect(result.renderRequest.durationInFrames).toBe(1800);
+    expect(result.scenes[0]?.scene.layers).toEqual(expect.arrayContaining([expect.objectContaining({ role: "primary", assetType: "generated-image" })]));
     await expect(readFile(join(outputDirectory, "assets", "scene-01.png"), "utf8")).resolves.toBe("image-1");
     expect(result.finalArtifact.kind).toBe("PublishingPackage");
     expect(result.traceFromRenderToSources).toContain("rome-ja-source-rome-foundation");

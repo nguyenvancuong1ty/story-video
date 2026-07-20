@@ -1,9 +1,9 @@
-import { AbsoluteFill, useCurrentFrame } from "remotion";
+import { AbsoluteFill, Img, staticFile, useCurrentFrame } from "remotion";
 
 import { getLayerTransform } from "../motion";
 import type { RemotionScene } from "../types";
 
-export const LayeredScene = ({ scene }: { scene: RemotionScene }) => {
+export const LayeredScene = ({ scene, imagePath }: { scene: RemotionScene; imagePath?: string }) => {
   const frame = useCurrentFrame();
   const cameraProgress = Math.min(1, frame / 90);
   const cameraScale = scene.camera.startScale + (scene.camera.endScale - scene.camera.startScale) * cameraProgress;
@@ -12,6 +12,7 @@ export const LayeredScene = ({ scene }: { scene: RemotionScene }) => {
 
   return (
     <AbsoluteFill style={{ overflow: "hidden", background: "#e9ddc4" }}>
+      {imagePath ? <Img src={staticFile(imagePath)} style={{ height: "100%", objectFit: "cover", width: "100%" }} /> : null}
       <AbsoluteFill style={{ transform: `translate(${cameraX}px, ${cameraY}px) scale(${cameraScale})`, transformOrigin: "center" }}>
         {scene.layers.map((layer) => (
           <div key={layer.id} style={layer.role === "background" ? {

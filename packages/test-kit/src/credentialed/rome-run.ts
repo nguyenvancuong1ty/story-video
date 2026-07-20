@@ -9,7 +9,12 @@ import type { CredentialedConfig } from "./config.js";
 import { ImageBudget } from "./image-budget.js";
 
 type CredentialedArtifact = { id: string; kind: string; inputArtifactIds: string[]; metadata: Record<string, unknown> };
-export type CredentialedScene = { id: string; narration: string; subtitle: string; imagePath: string; audioPath: string; assetId: string; narrationArtifactId: string };
+type RomeVisualScene = {
+  id: string;
+  camera: { startScale: number; endScale: number; startX: number; endX: number; startY: number; endY: number };
+  layers: Array<{ id: string; role: string; assetType: string; zIndex: number; layout: { anchorX: number; anchorY: number; widthPercent: number; scale: number; rotation: number }; motion: { preset: string; startFrame: number; intensity: number } }>;
+};
+export type CredentialedScene = { id: string; narration: string; subtitle: string; imagePath: string; audioPath: string; assetId: string; narrationArtifactId: string; scene: RomeVisualScene };
 export type RenderRequest = { durationInFrames: number; fps: 30; width: 1080; height: 1920 };
 export type CredentialedRomeResult = {
   scenes: CredentialedScene[];
@@ -92,7 +97,23 @@ export const runCredentialedRome = async (input: CredentialedRomeInput): Promise
     const narrationArtifact: CredentialedArtifact = { id: `rome-ja-narration-${scene.id}`, kind: "NarrationClip", inputArtifactIds: [localizedScript.id], metadata: { path: audioPath, provider: "capcut", voiceIndex: input.config.capcutTtsVoiceIndex, durationMs: audio.durationMs } };
     artifacts.push(imageArtifact, narrationArtifact);
     imageArtifactIds.push(imageArtifact.id);
-    scenes.push({ id: scene.id, narration: scene.narration, subtitle: scene.narration, imagePath, audioPath, assetId: imageArtifact.id, narrationArtifactId: narrationArtifact.id });
+    scenes.push({
+      id: scene.id,
+      narration: scene.narration,
+      subtitle: scene.narration,
+      imagePath,
+      audioPath,
+      assetId: imageArtifact.id,
+      narrationArtifactId: narrationArtifact.id,
+      scene: {
+        id: scene.id,
+        camera: { startScale: 1, endScale: 1.06, startX: 0, endX: -20, startY: 0, endY: 12 },
+        layers: [
+          { id: `${scene.id}-primary`, role: "primary", assetType: "generated-image", zIndex: 5, layout: { anchorX: 0.5, anchorY: 0.55, widthPercent: 48, scale: 1, rotation: -2 }, motion: { preset: "primary-entrance", startFrame: 6, intensity: 0.7 } },
+          { id: `${scene.id}-dust`, role: "effect", assetType: "particle", zIndex: 7, layout: { anchorX: 0.5, anchorY: 0.4, widthPercent: 100, scale: 1, rotation: 0 }, motion: { preset: "slow-drift", startFrame: 0, intensity: 0.3 } }
+        ]
+      }
+    });
   }
 
   const render: CredentialedArtifact = { id: "rome-ja-render", kind: "Render", inputArtifactIds: [storyboard.id, ...imageArtifactIds, ...scenes.map((scene) => scene.narrationArtifactId)], metadata: { width: 1080, height: 1920, fps: 30 } };

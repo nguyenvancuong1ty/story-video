@@ -1,6 +1,7 @@
 import { Composition } from "remotion";
 
 import { VideoComposition } from "./VideoComposition";
+import { buildRomeVideoProps } from "./run-props";
 import type { VideoProps } from "./types";
 
 const fixture: VideoProps = {
@@ -15,4 +16,19 @@ const fixture: VideoProps = {
   }
 };
 
-export const RemotionRoot = () => <Composition id="KnowledgeStoryFixture" component={VideoComposition} durationInFrames={90} fps={30} width={1080} height={1920} defaultProps={fixture} />;
+const runFixture = buildRomeVideoProps({
+  scenes: Array.from({ length: 6 }, (_, index) => ({
+    id: `scene-0${index + 1}`,
+    subtitle: "ローマ帝国の物語",
+    imagePath: "",
+    audioPath: "",
+    scene: fixture.scene
+  }))
+});
+
+export const RemotionRoot = () => (
+  <>
+    <Composition id="KnowledgeStoryFixture" component={VideoComposition} durationInFrames={90} fps={30} width={1080} height={1920} defaultProps={fixture} />
+    <Composition id="KnowledgeStoryRun" component={VideoComposition} durationInFrames={1800} fps={30} width={1080} height={1920} defaultProps={runFixture} />
+  </>
+);
