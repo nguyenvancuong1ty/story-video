@@ -1,0 +1,10 @@
+{
+  "name": "@ksvf/storage",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  }
+}
