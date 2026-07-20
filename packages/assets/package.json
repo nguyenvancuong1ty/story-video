@@ -1,0 +1,13 @@
+{
+  "name": "@ksvf/assets",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "sharp": "0.33.5"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  }
+}
