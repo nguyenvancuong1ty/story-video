@@ -6,8 +6,10 @@ import { basename, resolve } from "node:path";
 import { promisify } from "node:util";
 
 import { LocalChatImageProvider } from "../packages/assets/src/local-chat-image-provider.js";
+import { OpenRouterImageProvider } from "../packages/assets/src/openrouter-provider.js";
 import { CapCutTtsProvider } from "../packages/audio/src/capcut-provider.js";
 import { LocalOpenAiCompatibleProvider } from "../packages/editorial/src/local-llm-provider.js";
+import { OpenRouterLanguageModelProvider } from "../packages/editorial/src/openrouter-llm-provider.js";
 import { buildRomeVideoProps } from "../apps/remotion/src/run-props.js";
 import { assertCredentialedPreflight, loadCredentialedConfig } from "../packages/test-kit/src/credentialed/config.js";
 import { runCredentialedRome } from "../packages/test-kit/src/credentialed/rome-run.js";
@@ -47,12 +49,23 @@ const runCredentialedPilot = async (): Promise<string> => {
   if (existsSync(resolve(".env"))) process.loadEnvFile(resolve(".env"));
   const config = loadCredentialedConfig(process.env);
   await assertCredentialedPreflight(config);
+  const languageModel = config.llmProvider === "local"
+    ? new LocalOpenAiCompatibleProvider(config.localLlmBaseUrl, config.llmModel)
+    : new OpenRouterLanguageModelProvider(config.openRouterApiKey, config.llmModel, config.openRouterLlmBaseUrl);
+  const imageProvider = config.imageProvider === "local"
+    ? new LocalChatImageProvider({ baseUrl: config.localImageBaseUrl, model: config.imageModel })
+    : new OpenRouterImageProvider({
+      apiKey: config.openRouterApiKey,
+      model: config.imageModel,
+      baseUrl: config.openRouterImageBaseUrl,
+      transport: config.openRouterImageTransport
+    });
 
   const outputDirectory = resolve("out/rome-vi");
   const result = await runCredentialedRome({
     config,
-    languageModel: new LocalOpenAiCompatibleProvider(config.localLlmBaseUrl, config.localLlmModel),
-    imageProvider: new LocalChatImageProvider({ baseUrl: config.localImageBaseUrl, model: config.localImageModel }),
+    languageModel,
+    imageProvider,
     ttsProvider: new CapCutTtsProvider({ baseUrl: config.capcutTtsBaseUrl, voiceIndex: config.capcutTtsVoiceIndex, rate: config.capcutTtsRate, durationMs: 12_000 }),
     outputDirectory
   });

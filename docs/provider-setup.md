@@ -4,15 +4,52 @@ Set `OPENAI_API_KEY`, `OPENAI_RESEARCH_MODEL`, `OPENAI_EDITORIAL_MODEL`, and `OP
 
 Tests and deterministic pilot fixtures use fake providers and do not read these values. A credentialed production run must use project-specific model and prompt-template versions so provider provenance persists with every derived artifact.
 
-## Local-provider Rome acceptance
+## Credentialed Rome acceptance
 
-The credentialed Rome vertical slice uses the OpenAI-compatible local LLM at `http://localhost:20128/v1` with `LOCAL_LLM_MODEL=cx/gpt-5.6-terra`. It requires `OPENROUTER_API_KEY` and `OPENROUTER_IMAGE_MODEL` for the dedicated OpenRouter Image API. Keep both values only in the ignored `.env` file.
+The credentialed Rome vertical slice selects its LLM and image provider independently in the ignored `.env` file. Both default to the local OpenAI-compatible endpoint.
 
-CapCut narration is read from `CAPCUT_TTS_BASE_URL`, defaulting to `http://127.0.0.1:8765`; its default Japanese voice is `CAPCUT_TTS_VOICE_INDEX=25`. Start the service from the existing project before the run:
+Use the local LLM (the default):
+
+```dotenv
+LLM_PROVIDER=local
+LOCAL_LLM_BASE_URL=http://localhost:20128/v1
+LOCAL_LLM_MODEL=cx/gpt-5.6-terra
+```
+
+Or use OpenRouter for the LLM:
+
+```dotenv
+LLM_PROVIDER=openrouter
+OPENROUTER_API_KEY=...
+OPENROUTER_LLM_MODEL=...
+OPENROUTER_LLM_BASE_URL=https://openrouter.ai/api/v1
+```
+
+Use the local image endpoint (the default):
+
+```dotenv
+IMAGE_PROVIDER=local
+LOCAL_IMAGE_BASE_URL=http://localhost:20128/v1
+LOCAL_IMAGE_MODEL=ag/gemini-3.1-flash-image
+```
+
+Or use OpenRouter for images:
+
+```dotenv
+IMAGE_PROVIDER=openrouter
+OPENROUTER_API_KEY=...
+OPENROUTER_IMAGE_MODEL=...
+OPENROUTER_IMAGE_BASE_URL=https://openrouter.ai/api/v1
+OPENROUTER_IMAGE_TRANSPORT=curl
+```
+
+`OPENROUTER_IMAGE_TRANSPORT` can be `curl` (the default, suitable for large image responses) or `fetch`. The same `OPENROUTER_API_KEY` is used for either OpenRouter provider.
+
+CapCut narration is read from `CAPCUT_TTS_BASE_URL`, defaulting to `http://127.0.0.1:8765`; its default voice index is `CAPCUT_TTS_VOICE_INDEX=0`. Start the service from the existing project before the run:
 
 ```bash
 cd /home/cuongdev/Documents/voice_video
 python3 web_tts.py
 ```
 
-The first credentialed Rome run creates six 9:16 PNG images. `MAX_GENERATED_IMAGES_PER_PROJECT` cannot exceed `10`; exact image-cache hits do not consume the limit.
+The selected image provider and model are persisted in each generated image artifact.

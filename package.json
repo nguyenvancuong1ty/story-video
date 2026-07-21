@@ -2,6 +2,13 @@
   "name": "knowledge-story-video-factory",
   "private": true,
   "packageManager": "pnpm@9.15.0",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "9.15.0",
+      "onFail": "error"
+    }
+  },
   "engines": {
     "node": "22.x",
     "pnpm": "9.15.0"

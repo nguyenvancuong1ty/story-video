@@ -60,7 +60,7 @@ const imagePrompt = (narration: string, shotId: string, role: keyof typeof layer
 
 export const runCredentialedRome = async (input: CredentialedRomeInput): Promise<CredentialedRomeResult> => {
   const script = await input.languageModel.generateStructured({
-    model: input.config.localLlmModel,
+    model: input.config.llmModel,
     schema: LocalizedScriptSchema,
     promptTemplateRef: { id: "localized-script", version: 1 },
     language: "vi-VN",
@@ -73,7 +73,7 @@ export const runCredentialedRome = async (input: CredentialedRomeInput): Promise
   const audioDirectory = join(input.outputDirectory, "audio");
   await Promise.all([mkdir(assetsDirectory, { recursive: true }), mkdir(audioDirectory, { recursive: true })]);
   const artifacts: CredentialedArtifact[] = sourceIds.map((id) => ({ id, kind: "ResearchSource", inputArtifactIds: [], metadata: { locale: "vi-VN" } }));
-  const factPackage: CredentialedArtifact = { id: "rome-vi-facts", kind: "FactPackage", inputArtifactIds: [...sourceIds], metadata: { provider: "local", model: input.config.localLlmModel } };
+  const factPackage: CredentialedArtifact = { id: "rome-vi-facts", kind: "FactPackage", inputArtifactIds: [...sourceIds], metadata: { provider: input.config.llmProvider, model: input.config.llmModel } };
   const localizedScript: CredentialedArtifact = { id: "rome-vi-script", kind: "LocalizedScript", inputArtifactIds: [factPackage.id], metadata: { language: "vi-VN" } };
   const storyboard: CredentialedArtifact = { id: "rome-vi-storyboard", kind: "DirectorStoryboard", inputArtifactIds: [localizedScript.id], metadata: { styleProfileId: "paper-collage" } };
   artifacts.push(factPackage, localizedScript, storyboard);
@@ -92,7 +92,7 @@ export const runCredentialedRome = async (input: CredentialedRomeInput): Promise
         await writeFile(assetPath, role === "background" ? await normalizeAssetCanvas(image.bytes) : await removeGreenScreen(image.bytes));
       }
       const assetId = `rome-vi-${beat.id}-${role}`;
-      artifacts.push({ id: assetId, kind: "ApprovedAsset", inputArtifactIds: [storyboard.id], metadata: { path: assetPath, provider: "local-chat", model: input.config.localImageModel, role } });
+      artifacts.push({ id: assetId, kind: "ApprovedAsset", inputArtifactIds: [storyboard.id], metadata: { path: assetPath, provider: input.config.imageProvider, model: input.config.imageModel, role } });
       imageArtifactIds.push(assetId);
       sourceLayers.push({ role, assetPath, ...layerLayout[role] });
     }

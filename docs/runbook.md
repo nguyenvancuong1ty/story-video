@@ -11,9 +11,9 @@ For targeted regeneration, edit the layer prompt or selected variant, approve th
 ## Credentialed Rome vertical slice
 
 1. Use Node 22 and pnpm 9.15.0, then run `pnpm install --frozen-lockfile`.
-2. Add `OPENROUTER_API_KEY` and `OPENROUTER_IMAGE_MODEL` to the local `.env`; the local LLM defaults to `http://localhost:20128/v1` and `cx/gpt-5.6-terra`.
+2. Choose providers in `.env`: `LLM_PROVIDER=local|openrouter` and `IMAGE_PROVIDER=local|openrouter`. The local choices need `LOCAL_LLM_MODEL` and `LOCAL_IMAGE_MODEL`; an OpenRouter choice needs `OPENROUTER_API_KEY` plus its corresponding model variable.
 3. Start CapCut Web TTS at `http://127.0.0.1:8765` from `/home/cuongdev/Documents/voice_video` with `python3 web_tts.py`.
-4. Run `pnpm tsx scripts/run-pilot.ts --pilot rome-ja --credentialed`.
-5. Run `pnpm tsx scripts/verify-render.ts out/rome-ja.mp4`.
+4. Run `pnpm tsx scripts/run-pilot.ts --pilot rome-vi --credentialed`.
+5. Run `pnpm tsx scripts/verify-render.ts out/rome-vi.mp4`.
 
-The command fails before remote image generation when local LLM or CapCut is unavailable. A clean run creates six new images (never more than ten), six CapCut MP3 clips, `out/rome-ja.mp4`, and `out/rome-ja.publishing-package.json`.
+The command fails before image generation when the local LLM or CapCut is unavailable, and it validates the credentials for the selected image provider before creating images. A clean run writes CapCut MP3 clips, `out/rome-vi.mp4`, and `out/rome-vi.publishing-package.json`.
