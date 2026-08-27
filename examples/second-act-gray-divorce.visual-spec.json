@@ -1,0 +1,36 @@
+{
+  "clips_per_query": 2,
+  "filters": {
+    "orientation": "landscape",
+    "min_width": 1280,
+    "min_duration": 4,
+    "max_duration": 45
+  },
+  "queries": [
+    {
+      "slot_id": "hook-01",
+      "query": "older American woman sitting alone at kitchen table morning light",
+      "kind": "video"
+    },
+    {
+      "slot_id": "marriage-01",
+      "query": "older married couple quiet suburban home United States",
+      "kind": "video"
+    },
+    {
+      "slot_id": "paperwork-01",
+      "query": "older woman reviewing financial papers at home close up",
+      "kind": "video"
+    },
+    {
+      "slot_id": "reset-01",
+      "query": "older American woman driving alone open road hopeful",
+      "kind": "video"
+    },
+    {
+      "slot_id": "ending-01",
+      "query": "older woman walking peaceful small town America golden hour",
+      "kind": "video"
+    }
+  ]
+}
