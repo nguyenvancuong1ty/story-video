@@ -19,7 +19,8 @@
     "typecheck": "pnpm -r typecheck",
     "infra:up": "docker compose -f infra/docker-compose.yml up -d",
     "infra:down": "docker compose -f infra/docker-compose.yml down",
-    "second-act:footage": "python scripts/openmontage-retrieve.py --spec examples/second-act-gray-divorce.visual-spec.json --output out/second-act/footage"
+    "second-act:footage": "python scripts/openmontage-retrieve.py --spec examples/second-act-gray-divorce.visual-spec.json --output out/second-act/footage",
+    "second-act:pilot": "tsx scripts/run-second-act.ts"
   },
   "devDependencies": {
     "@ffprobe-installer/ffprobe": "2.1.2",
