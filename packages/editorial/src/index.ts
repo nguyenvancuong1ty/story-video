@@ -5,4 +5,5 @@ export * from "./local-llm-provider.js";
 export * from "./openrouter-llm-provider.js";
 export * from "./provider.js";
 export * from "./script.js";
+export * from "./second-act.js";
 export * from "./storyboard.js";
