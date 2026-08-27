@@ -2,11 +2,25 @@ import { z } from "zod";
 
 import type { LanguageModelProvider } from "./provider.js";
 
+export const secondActVisualToneSchema = z.enum(["cool", "neutral", "warm", "hopeful"]);
+export const secondActAmbienceSchema = z.enum([
+  "none",
+  "room-tone",
+  "rain",
+  "suburban-traffic",
+  "office",
+  "car-interior",
+  "paper"
+]);
+
 export const secondActBeatSchema = z.object({
   id: z.string().min(1),
   narration: z.string().min(80),
   subtitle: z.string().min(3).max(90),
-  visualQueries: z.array(z.string().min(3)).min(2).max(3)
+  keyPhrase: z.string().min(3).max(72),
+  visualTone: secondActVisualToneSchema,
+  ambience: secondActAmbienceSchema,
+  visualQueries: z.array(z.string().min(3)).min(3).max(5)
 });
 
 export const secondActStorySchema = z.object({
@@ -26,7 +40,7 @@ export type GenerateSecondActStoryOptions = {
   targetMinutes?: number;
 };
 
-const systemPrompt = `You are the senior story editor for an English-language YouTube channel called Second Act Stories.
+const systemPrompt = `You are the senior story editor and visual planner for an English-language YouTube channel called Second Act Stories.
 The audience is Americans age 55 and older. Write original, emotionally credible, culturally American first-person storytelling.
 
 Core editorial rules:
@@ -45,8 +59,12 @@ Output rules:
 - 14 to 18 beats.
 - Each beat narration should usually be 35 to 55 spoken words so the full story lands around 3 to 5 minutes.
 - Each beat gets a short subtitle of roughly 4 to 10 words.
-- Each beat gets 2 to 3 concise English stock-footage search queries. Queries should describe filmable US life, places, objects, or actions, not abstract emotions.
-- Avoid repeating the same visual query across adjacent beats.`;
+- Each beat gets one short keyPhrase, copied or closely paraphrased from its narration, suitable for restrained on-screen typography.
+- Each beat gets a visualTone: cool, neutral, warm, or hopeful.
+- Each beat gets one ambience cue from: none, room-tone, rain, suburban-traffic, office, car-interior, paper.
+- Each beat gets 3 to 5 concise English stock-footage search queries. Plan them as separate shots, normally in this order: establishing place, human action, detail/object, emotional or transitional image, optional second action.
+- Queries must describe filmable US life, places, objects, or actions, not abstract emotions. Avoid celebrity names, brands, exact copyrighted works, and impossible camera directions.
+- Do not repeat the same visual query within a beat or across adjacent beats.`;
 
 export const generateSecondActStory = async (
   provider: LanguageModelProvider,
@@ -56,9 +74,9 @@ export const generateSecondActStory = async (
   return provider.generateStructured<SecondActStory>({
     model: options.model,
     schema: secondActStorySchema,
-    promptTemplateRef: { id: "second-act-us55-story", version: 1 },
+    promptTemplateRef: { id: "second-act-us55-story", version: 2 },
     language: "en-US",
     system: systemPrompt,
-    user: `Create one complete Second Act Stories episode from this topic or idea. The input may be written in Vietnamese; understand it, then write the finished story in natural American English.\n\nTopic: ${options.topic}\nTarget runtime: about ${targetMinutes} minutes.\n\nMake the title clickable but believable. Make the visual queries practical for stock footage. The beats must form one continuous story, not a list of advice.`
+    user: `Create one complete Second Act Stories episode from this topic or idea. The input may be written in Vietnamese; understand it, then write the finished story in natural American English.\n\nTopic: ${options.topic}\nTarget runtime: about ${targetMinutes} minutes.\n\nMake the title clickable but believable. Make every visual query practical for stock footage and make the shots within each beat visually varied. The beats must form one continuous story, not a list of advice.`
   });
 };
