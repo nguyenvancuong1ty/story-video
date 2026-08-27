@@ -56,6 +56,10 @@ Core editorial rules:
 
 Output rules:
 - Return valid JSON only.
+- Required top-level keys: title, description, audiencePromise, fictionDisclosure, beats.
+- Every beat must include: id, narration, subtitle, keyPhrase, visualTone, ambience, visualQueries.
+- Use beat ids beat-01, beat-02, beat-03, and so on, with no gaps.
+- description must summarize the episode in 1-3 sentences; audiencePromise must state what viewers will get emotionally; fictionDisclosure must clearly say the story is fictionalized.
 - 14 to 18 beats.
 - Each beat narration should usually be 35 to 55 spoken words so the full story lands around 3 to 5 minutes.
 - Each beat gets a short subtitle of roughly 4 to 10 words.
@@ -74,7 +78,7 @@ export const generateSecondActStory = async (
   return provider.generateStructured<SecondActStory>({
     model: options.model,
     schema: secondActStorySchema,
-    promptTemplateRef: { id: "second-act-us55-story", version: 2 },
+    promptTemplateRef: { id: "second-act-us55-story", version: 3 },
     language: "en-US",
     system: systemPrompt,
     user: `Create one complete Second Act Stories episode from this topic or idea. The input may be written in Vietnamese; understand it, then write the finished story in natural American English.\n\nTopic: ${options.topic}\nTarget runtime: about ${targetMinutes} minutes.\n\nMake the title clickable but believable. Make every visual query practical for stock footage and make the shots within each beat visually varied. The beats must form one continuous story, not a list of advice.`

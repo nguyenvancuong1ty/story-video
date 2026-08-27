@@ -30,3 +30,35 @@ it("rejects a local completion with no JSON content", async () => {
     provider.generateStructured({ model: "", schema: LocalizedScriptSchema, promptTemplateRef: { id: "localized-script", version: 1 }, language: "ja-JP", system: "", user: "" })
   ).rejects.toThrow("local LLM response did not include structured content");
 });
+
+it("parses fenced JSON content from the local gateway", async () => {
+  const provider = new LocalOpenAiCompatibleProvider(
+    "http://localhost:20128/v1",
+    "cx/gpt-5.6-terra",
+    async () => new Response(JSON.stringify({ choices: [{ message: { content: '```json\n{"language":"ja-JP","scenes":[]}\n```' } }] }))
+  );
+  await expect(provider.generateStructured({
+    model: "", schema: LocalizedScriptSchema,
+    promptTemplateRef: { id: "localized-script", version: 1 },
+    language: "ja-JP", system: "", user: ""
+  })).resolves.toMatchObject({ language: "ja-JP" });
+});
+
+it("parses an SSE chat-completion response from the local gateway", async () => {
+  const body = [
+    'data: {"choices":[{"delta":{"content":"{\\\"language\\\":\\\"ja-JP\\\",\\\"scenes\\\":"}}]}',
+    'data: {"choices":[{"delta":{"content":"[]}"}}]}',
+    "data: [DONE]"
+  ].join("\n\n");
+  const provider = new LocalOpenAiCompatibleProvider(
+    "http://localhost:20128/v1",
+    "cx/gpt-5.6-terra",
+    async () => new Response(body, { headers: { "content-type": "text/event-stream" } })
+  );
+
+  await expect(provider.generateStructured({
+    model: "", schema: LocalizedScriptSchema,
+    promptTemplateRef: { id: "localized-script", version: 1 },
+    language: "ja-JP", system: "", user: ""
+  })).resolves.toMatchObject({ language: "ja-JP" });
+});

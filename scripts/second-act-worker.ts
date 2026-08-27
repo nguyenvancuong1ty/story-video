@@ -63,7 +63,10 @@ const uploadFile = async (path: string, parentId: string): Promise<{ id: string;
 };
 
 const renderJob = async (topic: string): Promise<string> => {
-  const { stdout } = await execFileAsync("pnpm", [
+  const pnpmScript = process.env.npm_execpath?.trim();
+  if (!pnpmScript) throw new Error("npm_execpath is unavailable; start the worker through pnpm");
+  const { stdout } = await execFileAsync(process.execPath, [
+    pnpmScript,
     "second-act:pilot", "--", "--topic", topic,
     "--minutes", process.env.SECOND_ACT_WORKER_MINUTES?.trim() || "4",
     "--license-mode", process.env.SECOND_ACT_LICENSE_MODE?.trim() || "safe"

@@ -105,7 +105,12 @@ const main = async (): Promise<void> => {
   const voiceIndex = Number(process.env.CAPCUT_TTS_VOICE_INDEX ?? "0");
   const rate = process.env.CAPCUT_TTS_RATE ?? "1.0";
 
-  const languageModel = new LocalOpenAiCompatibleProvider(llmBaseUrl, llmModel);
+  const languageModel = new LocalOpenAiCompatibleProvider(
+    llmBaseUrl,
+    llmModel,
+    fetch,
+    process.env.LOCAL_GATEWAY_API_KEY?.trim()
+  );
   const story = await generateSecondActStory(languageModel, { topic, model: llmModel, targetMinutes: minutes });
   const slug = slugify(story.title);
   const runDir = resolve("out/second-act", slug);
@@ -327,7 +332,7 @@ const main = async (): Promise<void> => {
       audioPath: `runs/second-act/${slug}/audio/${beat.id}.mp3`,
       subtitle: beat.subtitle,
       visualTone: beat.visualTone,
-      chapterLabel: beatIndex % 4 === 0 ? `Chapter ${Math.floor(beatIndex / 4) + 1} · ${beat.subtitle}` : undefined,
+      chapterLabel: beatIndex % 4 === 0 ? `Chapter ${Math.floor(beatIndex / 4) + 1} - ${beat.subtitle}` : undefined,
       ambiencePath: await resolveAmbiencePath(beat.ambience),
       shots
     });
@@ -341,11 +346,18 @@ const main = async (): Promise<void> => {
   await writeFile(resolve(runDir, "footage-provenance.json"), `${JSON.stringify({ licenseMode, clips: provenance }, null, 2)}\n`);
 
   const mp4Path = resolve(runDir, `${slug}.mp4`);
-  await execFileAsync("pnpm", [
+  const pnpmScript = process.env.npm_execpath?.trim();
+  if (!pnpmScript) throw new Error("npm_execpath is unavailable; start this script through pnpm");
+  await execFileAsync(process.execPath, [
+    pnpmScript,
     "--filter", "@ksvf/remotion",
     "exec", "remotion", "render",
     "src/index.ts", "SecondActStory", mp4Path,
-    "--props", propsPath
+    "--props", propsPath,
+    "--gl=angle",
+    "--hardware-acceleration=required",
+    "--concurrency=75%",
+    "--offthreadvideo-video-threads=1"
   ], { maxBuffer: 30 * 1024 * 1024 });
   const verified = await verifyRender(mp4Path, undefined, { width: 1920, height: 1080, fps: FPS });
   const publishingPackage = {
