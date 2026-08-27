@@ -459,3 +459,47 @@ User discusses an idea with ChatGPT
 ```
 
 The user should not have to manually copy topics/scripts into Sheets or manually run a render command for every episode once the worker is operational.
+
+## 18. Local worker implementation update — 2026-08-27
+
+The first Google Sheet → local worker → Google Drive implementation now exists on `feat/second-act-openmontage`.
+
+Added commands:
+
+```text
+pnpm second-act:auth
+pnpm second-act:worker
+pnpm second-act:worker -- --once
+```
+
+Worker behavior implemented:
+
+- reads `CONTENT_QUEUE` by header name
+- claims the first `READY_TO_RENDER` row
+- writes `RENDERING` / `UPLOADING` / `DONE`
+- runs the existing `second-act:pilot` pipeline rather than rebuilding rendering
+- uploads final MP4 plus run JSON artifacts to Google Drive
+- writes local video path and Drive URL back to the Sheet
+- writes `RENDER_FAILED` plus an error note on failure
+- supports continuous polling and safe `--once` mode
+
+Google OAuth uses Node 22 built-in `fetch`; no `googleapis` dependency was added.
+OAuth tokens are stored under ignored `.second-act/` local state.
+
+Verification after implementation:
+
+- worker helper unit tests pass
+- standalone worker/auth TypeScript compile passes
+- full workspace `typecheck` passes
+- full workspace `test` passes
+- full workspace `lint` passes
+
+Local machine blockers still to configure before the first real worker run:
+
+- Google OAuth desktop client ID + secret
+- one-time `pnpm second-act:auth`
+- Pexels API key
+- local LLM service on port 20128
+- CapCut TTS service on port 8765
+
+The local `.env` has been created and already points to `C:\App\OpenMontage` and its `.venv` Python. Do not commit `.env` or `.second-act/` tokens.
