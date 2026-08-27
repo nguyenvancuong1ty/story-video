@@ -96,12 +96,13 @@ const ShotVisual = ({
   const lastFrame = Math.max(1, shot.durationInFrames - 1);
   const fadeIn = Math.min(shot.overlapInFrames, Math.floor(lastFrame / 3));
   const fadeOut = Math.min(fadeOutFrames, Math.floor(lastFrame / 3));
-  const opacity = interpolate(
-    frame,
-    [0, Math.max(1, fadeIn), Math.max(fadeIn + 1, lastFrame - fadeOut), lastFrame],
-    [fadeIn > 0 ? 0 : 1, 1, 1, fadeOut > 0 ? 0 : 1],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-  );
+  const fadeInOpacity = fadeIn > 0
+    ? interpolate(frame, [0, fadeIn], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })
+    : 1;
+  const fadeOutOpacity = fadeOut > 0
+    ? interpolate(frame, [lastFrame - fadeOut, lastFrame], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })
+    : 1;
+  const opacity = Math.min(fadeInOpacity, fadeOutOpacity);
   const scale = interpolate(frame, [0, lastFrame], [shot.motion.startScale, shot.motion.endScale], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp"
