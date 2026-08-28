@@ -1,6 +1,6 @@
 # Second Act Stories — Project Handoff
 
-_Last updated: 2026-08-27_
+_Last updated: 2026-08-28_
 
 This file is the working handoff for the **Second Act Stories** YouTube production system. New chats/agents should read this first and continue from the current state instead of redesigning the project from scratch.
 
@@ -49,29 +49,31 @@ Draft PR:
 
 Latest known CI status before this handoff: **passing** — tests, lint, and typecheck succeeded.
 
-Do not merge the PR until a real local render succeeds and the user explicitly approves merging.
+A real local render has now succeeded. Keep the PR in draft and do not merge until the user explicitly approves merging.
 
 ## 4. Current architecture
 
 ```text
-ChatGPT
-  ↓
-Google Sheet — editorial source of truth / queue
-  ↓
-Local Windows worker — planned, not implemented yet
-  ↓
-CapCut TTS
-  ↓
-OpenMontage stock retrieval
-  ↓
-license/reuse filtering + edit planning
-  ↓
-Remotion 1920x1080 @ 30fps
-  ↓
+ChatGPT / agent
+  ->
+Google Sheet - editorial source of truth / queue
+  ->
+story-video - business orchestration / local worker
+  ->
+CapCut TTS - current default English voice index 105
+  ->
+OpenMontage - visual direction, retrieval, asset selection, edit decisions
+  ->
+FFmpeg documentary-montage renderer - 1920x1080 @ 30fps
+  ->
+technical + visual QC
+  ->
 MP4
-  ↓
+  ->
 Google Drive archive
 ```
+
+Remotion remains in the repository, but the current preferred Second Act visual/render path is **OpenMontage-native + FFmpeg**. The separate visual-planner LLM layer is being retired in favor of the agent reading project visual-direction skills and writing OpenMontage-compatible plans directly.
 
 Intended role split:
 
@@ -335,9 +337,9 @@ long-form outline
 
 A one-hour narration is roughly thousands of words, so chunking is required for reliability and quality.
 
-## 13. Next major implementation: local worker
+## 13. Local worker status - implemented
 
-This is the **next task**.
+The first Google Sheet -> local worker -> Google Drive bridge is implemented and has been exercised on the local Windows machine.
 
 Goal:
 
@@ -437,12 +439,12 @@ Do not rely on superficial transformations such as mirror/crop tricks.
 
 When continuing this project:
 
-1. Read this `HANDOFF.md` first.
-2. Inspect the current branch before making changes.
-3. Continue from the existing architecture; do not rebuild the pipeline from scratch.
-4. Implement the **Google Sheet → local worker → Drive** bridge next unless the user changes priority.
-5. Keep the PR draft until a real local end-to-end render succeeds.
-6. Do not merge without explicit user approval.
+1. Read this `HANDOFF.md` first, especially section 19.
+2. Inspect the current branch and active local processes before making changes.
+3. Continue from the existing OpenMontage-native architecture; do not rebuild the pipeline from scratch.
+4. Current priority: finish local LTX-Video installation, generate one protagonist test shot, then decide whether to wire it into OpenMontage as `ai_generate`.
+5. Keep the PR draft; do not merge without explicit user approval.
+6. Do not publish publicly without explicit user instruction.
 
 ## 17. User workflow goal
 
@@ -494,12 +496,91 @@ Verification after implementation:
 - full workspace `test` passes
 - full workspace `lint` passes
 
-Local machine blockers still to configure before the first real worker run:
+Local machine validation is now complete for the first real run: Google OAuth, Pexels access, local LLM, CapCut TTS, OpenMontage, and Drive upload have all been exercised successfully.
 
-- Google OAuth desktop client ID + secret
-- one-time `pnpm second-act:auth`
-- Pexels API key
-- local LLM service on port 20128
-- CapCut TTS service on port 8765
+Important: the current worker implementation still calls the older `second-act:pilot` render entrypoint. The newer OpenMontage-native FFmpeg renderer is proven locally but is not yet wired into the Sheet worker path. Do that only after the LTX experiment and final renderer routing are settled.
 
 The local `.env` has been created and already points to `C:\App\OpenMontage` and its `.venv` Python. Do not commit `.env` or `.second-act/` tokens.
+
+## 19. Current production snapshot - 2026-08-28
+
+### Repository state
+
+- Repository: `nguyenvancuong1ty/story-video`
+- Active branch: `feat/second-act-openmontage`
+- Latest pushed commit before this handoff update: `de7a371 feat: add OpenMontage Second Act render path`
+- Draft PR remains open; **do not merge without explicit user instruction**.
+- OpenMontage sibling checkout: `C:\App\OpenMontage`
+- OpenMontage core has not been fork-modified for this work; Second Act-specific behavior lives in `story-video`.
+
+### OpenMontage-native Second Act renderer
+
+Added:
+
+- `scripts/render-second-act-openmontage.py`
+- `openmontage/skills/second-act-visual-direction.md`
+
+The project visual-direction skill enforces persistent protagonist continuity, hard rejection of wrong-age/wrong-gender protagonist footage, face-safe stock coverage when identity cannot be maintained, conceptual routing to `stock` / `ai_generate` / `graphic`, a default AI-video cap near 20%, restrained 4-7 second documentary shots, and strong first-15-second crisis visualization.
+
+The renderer consumes the approved run plus agent-authored OpenMontage plan, uses OpenMontage `VideoCompose`, renders through `documentary-montage` + `ffmpeg`, concatenates the individual `audio/beat-XX.mp3` narration files directly, applies two-pass loudness normalization targeting about `-14 LUFS` / `TP=-1.5 dB`, burns subtitles, and runs OpenMontage final review. It no longer depends on audio extracted from an older Remotion MP4.
+
+### Current pilot / latest accepted render
+
+Story slug: `divorced-at-63-with-no-retirement-how-i-rebuilt-my-life-from`
+
+Current English narration voice:
+
+- CapCut TTS `voice_index=105`
+- display name: `American Female`
+- `.env.example` and the Second Act fallback now default to index 105 instead of index 0
+
+Latest local final:
+
+`C:\App\story-video\out\second-act\divorced-at-63-with-no-retirement-how-i-rebuilt-my-life-from\second-act-openmontage-voice105-final-v2.mp4`
+
+Measured final properties:
+
+- duration: ~265.4 sec (4:25)
+- 1920x1080, 30 fps, H.264 + AAC
+- 45 visual cuts
+- OpenMontage final review: PASS
+- measured loudness: about `-14.5 LUFS`, true peak about `-1.0 dBTP`
+
+Google Drive copy:
+
+`https://drive.google.com/file/d/1cSnUkywtBN6HkeOAT_95o6XkYQCLOcV7/view?usp=drivesdk`
+
+### Visual-source status
+
+The latest pilot render is **100% downloaded Pexels stock footage**. There is no AI-generated image/video in that final. TTS, subtitles, planning, edit decisions, and composition are automated, but all visible motion footage is stock.
+
+This happened because the current continuity-safe plan had no configured local AI-video provider. It is not intended as a permanent OpenMontage limitation. Preferred future hybrid target is roughly **70-85% stock + 15-30% AI-generated video**, reserving AI for persistent-protagonist shots and specific emotional beats where stock cannot preserve continuity.
+
+### Local AI-video experiment - LTX-Video (work in progress)
+
+Current priority is adding one local AI-video provider and testing one real Second Act protagonist shot before production integration.
+
+- official `Lightricks/LTX-Video` checkout: `C:\App\LTX-Video`
+- target model: `ltxv-2b-0.9.8-distilled`
+- GPU: NVIDIA RTX 5060 Ti 16GB
+- separate LTX environment is being prepared so OpenMontage/story-video environments are not disturbed
+- an existing local CUDA stack (`torch 2.13.0+cu130`) successfully detects the RTX 5060 Ti
+
+As of the latest check on 2026-08-28 around 10:39 GMT+7:
+
+- repo clone: complete
+- CUDA/PyTorch validation: complete
+- LTX dependencies: still downloading/installing; `transformers` and `av` were available, while `diffusers` and `timm` were not yet complete
+- LTX 2B model weights (~6.3GB) had **not started downloading yet**
+- observed network throughput was unusually slow, roughly `0.46 Mbps` download during a 5-second measurement
+
+Do not assume LTX is ready until dependencies import successfully and the model file is present.
+
+Planned first AI shot: realistic documentary footage of a U.S. woman around 63 in a small apartment after divorce, holding a new key, natural light, restrained emotion, subtle slow camera push-in, approximately 4-5 seconds. After generation, inspect visual quality, temporal stability, age accuracy, anatomy/hands, realism, motion, and generation time before wiring LTX into OpenMontage as `ai_generate`.
+
+### Important operating notes
+
+- Remote Windows machine root: `C:\App`
+- Keep the machine awake while installs/renders run; display may turn off, but AC sleep should be `Never`.
+- Do not use Remote Desktop Commander's `shutdown` action as an OS shutdown command; it disconnects/stops the remote agent rather than safely powering off Windows.
+- Do not expose `.env`, OAuth tokens, API keys, or other secrets in logs or handoff updates.
