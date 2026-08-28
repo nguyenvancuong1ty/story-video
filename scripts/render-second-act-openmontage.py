@@ -29,6 +29,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", default="second-act-openmontage.mp4")
     parser.add_argument("--draft-seconds", type=float, default=0)
     parser.add_argument("--comfy-root", default=r"C:\App\ComfyUI")
+    parser.add_argument("--strict-semantics", action="store_true")
     return parser.parse_args()
 
 
@@ -93,13 +94,45 @@ def media_duration_seconds(path: Path) -> float:
     return float(result.stdout.strip())
 
 
-
 def resolve_plan_path(value: str, run_dir: Path) -> Path:
     path = Path(str(value))
     return path.resolve() if path.is_absolute() else (run_dir / path).resolve()
 
 
-def materialize_ai_clips(plan: dict[str, Any], run_dir: Path, comfy_root: Path, clips: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+def validate_plan_semantics(plan_path: Path, strict: bool) -> dict[str, Any]:
+    qa = Path(__file__).with_name("second-act-plan-qa.py")
+    cmd = [sys.executable, str(qa), "--plan", str(plan_path)]
+    if strict:
+        cmd.append("--strict")
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    try:
+        report = json.loads(result.stdout or "{}")
+    except json.JSONDecodeError:
+        report = {"success": False, "errors": [result.stdout or result.stderr or "semantic QA failed"]}
+    if result.returncode != 0:
+        raise ValueError("Second Act semantic QA failed: " + "; ".join(report.get("errors") or []))
+    return report
+
+
+def normalize_ai_asset(raw_output: Path, entry: dict[str, Any]) -> Path:
+    if entry.get("normalize") is False:
+        return raw_output
+    normalizer = Path(__file__).with_name("normalize-ai-footage.py")
+    matched = raw_output.with_name(f"{raw_output.stem}-matched.mp4")
+    needs_refresh = not matched.exists() or matched.stat().st_mtime < raw_output.stat().st_mtime
+    if needs_refresh:
+        subprocess.run([
+            sys.executable, str(normalizer), "--input", str(raw_output), "--output", str(matched),
+            "--width", str(int(entry.get("delivery_width", 1920))),
+            "--height", str(int(entry.get("delivery_height", 1080))),
+            "--grain", str(float(entry.get("grain", 1.4))),
+        ], check=True)
+    return matched
+
+
+def materialize_ai_clips(
+    plan: dict[str, Any], run_dir: Path, comfy_root: Path, clips: dict[str, dict[str, Any]]
+) -> dict[str, dict[str, Any]]:
     provider = Path(__file__).with_name("ltx-comfy-provider.py")
     for beat in plan.get("beats", []):
         for entry in list(beat.get("clips") or []):
@@ -110,11 +143,21 @@ def materialize_ai_clips(plan: dict[str, Any], run_dir: Path, comfy_root: Path, 
             reference = resolve_plan_path(str(entry.get("reference") or ""), run_dir)
             if not clip_id or not prompt or not reference.exists():
                 raise ValueError(f"Invalid ai_generate entry in {beat.get('id')}: id, prompt and reference are required")
-            output = resolve_plan_path(str(entry.get("output") or f"ai/{clip_id}.mp4"), run_dir)
-            output.parent.mkdir(parents=True, exist_ok=True)
-            if not output.exists():
-                cmd = [sys.executable, str(provider), "--comfy-root", str(comfy_root), "--reference", str(reference), "--prompt", prompt, "--output", str(output), "--seed", str(int(entry.get("seed", 65001))), "--seconds", str(float(entry.get("duration", 5.0))), "--width", str(int(entry.get("width", 768))), "--height", str(int(entry.get("height", 448))), "--start-strength", str(float(entry.get("start_strength", 2.0))), "--end-strength", str(float(entry.get("end_strength", 1.25)))]
+            raw_output = resolve_plan_path(str(entry.get("output") or f"ai/{clip_id}.mp4"), run_dir)
+            raw_output.parent.mkdir(parents=True, exist_ok=True)
+            if not raw_output.exists():
+                cmd = [
+                    sys.executable, str(provider), "--comfy-root", str(comfy_root),
+                    "--reference", str(reference), "--prompt", prompt, "--output", str(raw_output),
+                    "--seed", str(int(entry.get("seed", 65001))),
+                    "--seconds", str(float(entry.get("duration", 5.0))),
+                    "--width", str(int(entry.get("width", 768))),
+                    "--height", str(int(entry.get("height", 448))),
+                    "--start-strength", str(float(entry.get("start_strength", 2.0))),
+                    "--end-strength", str(float(entry.get("end_strength", 1.25))),
+                ]
                 subprocess.run(cmd, check=True)
+            output = normalize_ai_asset(raw_output, entry)
             clips[clip_id] = {
                 "clip_id": clip_id,
                 "path": str(output),
@@ -122,6 +165,9 @@ def materialize_ai_clips(plan: dict[str, Any], run_dir: Path, comfy_root: Path, 
                 "source": "ltx-comfy",
                 "source_url": None,
                 "license": "generated",
+                "role": entry.get("role"),
+                "identity_source": entry.get("identity_source"),
+                "visual_match": "lanczos-unsharp-grain-v1" if output != raw_output else None,
             }
     return clips
 
@@ -222,6 +268,9 @@ def build_cuts(
                 "source": clip.get("source"),
                 "source_url": clip.get("source_url"),
                 "license": clip.get("license"),
+                "role": clip_ref.get("role") if isinstance(clip_ref, dict) else None,
+                "identity_source": clip.get("identity_source"),
+                "visual_match": clip.get("visual_match"),
             }
             cuts.append({
                 "id": f"{beat_id}-shot-{shot_index + 1}",
@@ -264,6 +313,7 @@ def main() -> int:
     if not plan_path.is_absolute():
         plan_path = run_dir / plan_path
     plan = load_json(plan_path)
+    semantic_qa = validate_plan_semantics(plan_path, args.strict_semantics)
     clips = clip_index(retrieval)
     clips = materialize_ai_clips(plan, run_dir, Path(args.comfy_root).resolve(), clips)
     cuts, assets, total_duration = build_cuts(plan, edit_plan, clips, args.draft_seconds)
@@ -275,6 +325,9 @@ def main() -> int:
     normalize_beat_audio(audio_files, normalized_audio)
     (run_dir / "second-act-openmontage-timed-edit-plan.json").write_text(
         json.dumps(edit_plan, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    (run_dir / "second-act-semantic-qa.json").write_text(
+        json.dumps(semantic_qa, ensure_ascii=False, indent=2), encoding="utf-8"
     )
 
     output_path = Path(args.output)
@@ -291,6 +344,7 @@ def main() -> int:
             "compose_target": {"width": 1920, "height": 1080, "fit": "cover"},
             "proposal_render_runtime": "ffmpeg",
             "visual_direction": "second-act-visual-direction",
+            "semantic_qa": semantic_qa,
         },
         "subtitles": {
             "enabled": True,
@@ -340,6 +394,7 @@ def main() -> int:
         "output": str(output_path),
         "cut_count": len(cuts),
         "total_duration_seconds": round(total_duration, 3),
+        "semantic_qa": semantic_qa,
     }
     (run_dir / "second-act-openmontage-render-report.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2, default=str), encoding="utf-8"
