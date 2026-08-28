@@ -102,7 +102,7 @@ const main = async (): Promise<void> => {
   const llmBaseUrl = required("LOCAL_LLM_BASE_URL", "http://localhost:20128/v1");
   const llmModel = required("LOCAL_LLM_MODEL", "cx/gpt-5.6-terra");
   const capcutBaseUrl = required("CAPCUT_TTS_BASE_URL", "http://127.0.0.1:8765");
-  const voiceIndex = Number(process.env.CAPCUT_TTS_VOICE_INDEX ?? "0");
+  const voiceIndex = Number(process.env.CAPCUT_TTS_VOICE_INDEX ?? "105");
   const rate = process.env.CAPCUT_TTS_RATE ?? "1.0";
 
   const languageModel = new LocalOpenAiCompatibleProvider(
