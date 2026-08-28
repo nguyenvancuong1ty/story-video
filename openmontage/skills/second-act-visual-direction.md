@@ -46,3 +46,14 @@ Route every planned shot to one of `stock`, `ai_generate`, or `graphic`.
 Before accepting a cut, check: narration match, protagonist continuity, age/gender correctness, geographic plausibility, technical quality, logos/text, and unnecessary reuse.
 
 After render, inspect frames from the opening plus every protagonist-heavy beat. Replace any shot that makes the viewer infer a different protagonist. A technically valid render is not a quality pass if the story-to-visual mapping is wrong.
+
+## Local LTX AI routing
+
+- Local AI provider is `scripts/ltx-comfy-provider.py`, backed by ComfyUI on `127.0.0.1:8188` and LTX-Video 2B distilled.
+- For stable protagonist anchor shots, use a persistent reference image plus dual `LTXVAddGuide` conditioning at the first and last frame.
+- Default tested preset: 768x448, 24 fps, 121 output frames (~5.04s), 20 steps, start guide strength 2.0, end guide strength 1.25, CFG 1.0.
+- Always crop inserted guide latents with `LTXVCropGuides` before VAE decode so output duration remains the requested shot length.
+- This preset is appropriate for subtle hero/anchor motion in the same or closely related environment. Do not assume it can freely change backgrounds while preserving identity.
+- A plan may put an `ai_generate` object directly inside a beat's `clips` array. Required fields are `type`, `id`, `reference`, and `prompt`; optional fields include `duration`, `seed`, `width`, `height`, `start_strength`, and `end_strength`.
+- Generated clips are materialized before composition and enter the OpenMontage asset manifest as `source: ltx-comfy`, `license: generated`.
+- If a generated shot produces an extra person, obvious identity drift, wrong age, changed hair/outfit, malformed hands, or beauty-filter skin, reject and regenerate; technical encode success alone is not acceptance.

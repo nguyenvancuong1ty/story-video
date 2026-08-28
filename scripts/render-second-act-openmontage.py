@@ -28,6 +28,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--openmontage", required=True)
     parser.add_argument("--output", default="second-act-openmontage.mp4")
     parser.add_argument("--draft-seconds", type=float, default=0)
+    parser.add_argument("--comfy-root", default=r"C:\App\ComfyUI")
     return parser.parse_args()
 
 
@@ -90,6 +91,39 @@ def media_duration_seconds(path: Path) -> float:
         check=True, capture_output=True, text=True,
     )
     return float(result.stdout.strip())
+
+
+
+def resolve_plan_path(value: str, run_dir: Path) -> Path:
+    path = Path(str(value))
+    return path.resolve() if path.is_absolute() else (run_dir / path).resolve()
+
+
+def materialize_ai_clips(plan: dict[str, Any], run_dir: Path, comfy_root: Path, clips: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    provider = Path(__file__).with_name("ltx-comfy-provider.py")
+    for beat in plan.get("beats", []):
+        for entry in list(beat.get("clips") or []):
+            if not isinstance(entry, dict) or entry.get("type") != "ai_generate":
+                continue
+            clip_id = str(entry.get("id") or "").strip()
+            prompt = str(entry.get("prompt") or "").strip()
+            reference = resolve_plan_path(str(entry.get("reference") or ""), run_dir)
+            if not clip_id or not prompt or not reference.exists():
+                raise ValueError(f"Invalid ai_generate entry in {beat.get('id')}: id, prompt and reference are required")
+            output = resolve_plan_path(str(entry.get("output") or f"ai/{clip_id}.mp4"), run_dir)
+            output.parent.mkdir(parents=True, exist_ok=True)
+            if not output.exists():
+                cmd = [sys.executable, str(provider), "--comfy-root", str(comfy_root), "--reference", str(reference), "--prompt", prompt, "--output", str(output), "--seed", str(int(entry.get("seed", 65001))), "--seconds", str(float(entry.get("duration", 5.0))), "--width", str(int(entry.get("width", 768))), "--height", str(int(entry.get("height", 448))), "--start-strength", str(float(entry.get("start_strength", 2.0))), "--end-strength", str(float(entry.get("end_strength", 1.25)))]
+                subprocess.run(cmd, check=True)
+            clips[clip_id] = {
+                "clip_id": clip_id,
+                "path": str(output),
+                "duration": media_duration_seconds(output),
+                "source": "ltx-comfy",
+                "source_url": None,
+                "license": "generated",
+            }
+    return clips
 
 
 def retime_edit_plan(edit_plan: dict[str, Any], run_dir: Path) -> dict[str, Any]:
@@ -162,7 +196,8 @@ def build_cuts(
         if not clip_ids:
             raise ValueError(f"Plan has no clips for {beat_id}")
         per_shot = beat_duration / len(clip_ids)
-        for shot_index, clip_id in enumerate(clip_ids):
+        for shot_index, clip_ref in enumerate(clip_ids):
+            clip_id = str(clip_ref.get("id") if isinstance(clip_ref, dict) else clip_ref)
             if draft_seconds > 0 and timeline >= draft_seconds:
                 return cuts, list(assets.values()), timeline
             clip = clips.get(str(clip_id))
@@ -230,6 +265,7 @@ def main() -> int:
         plan_path = run_dir / plan_path
     plan = load_json(plan_path)
     clips = clip_index(retrieval)
+    clips = materialize_ai_clips(plan, run_dir, Path(args.comfy_root).resolve(), clips)
     cuts, assets, total_duration = build_cuts(plan, edit_plan, clips, args.draft_seconds)
     subtitle_path = run_dir / "second-act-openmontage.srt"
     write_subtitles(story, edit_plan, subtitle_path)
