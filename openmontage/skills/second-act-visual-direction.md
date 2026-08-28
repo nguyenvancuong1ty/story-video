@@ -89,7 +89,9 @@ Do not treat the official LTX 0.9.8 IC-LoRA detailer as a generic face identity 
 
 - Keep one `identity_source` master portrait per story.
 - Generate each clear-face scene keyframe from that master with a training-free identity-preserving image model before LTX animation.
-- Preferred first implementation is SDXL InstantID because it is single-image, training-free, and practical on a 16 GB GPU.
+- Current tested implementation is native ComfyUI PhotoMaker on SDXL (`scripts/photomaker-keyframe-provider.py`). It is single-image, training-free, runs locally on the 16 GB GPU, and generates a scene keyframe in roughly 8-17 seconds once warm.
+- Keep PhotoMaker scene prompts concise (60 words or fewer) so native SDXL conditioning stays within one 77-token chunk.
+- Generate 2-3 candidate seeds for protagonist-heavy scenes and reject any keyframe whose face, hair, age, or wardrobe drifts before video generation.
 - Keyframe generation owns identity and background changes; LTX owns temporal motion.
 - Reuse outfit/hair descriptors across scene prompts unless the story explicitly changes them.
 - Reject a keyframe before video generation if the face, apparent age, hair, or wardrobe has already drifted.
