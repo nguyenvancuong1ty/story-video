@@ -76,7 +76,7 @@
     ] },
     { "id": "beat-14", "clips": [
       { "type": "stock", "id": "pexels_29199225", "role": "environment" },
-      { "type": "stock", "id": "pexels_8439245", "role": "hands" },
+      { "type": "stock", "id": "pexels_7055354", "role": "object" },
       { "type": "stock", "id": "pexels_8217608", "role": "silhouette" }
     ] },
     { "id": "beat-15", "clips": [
