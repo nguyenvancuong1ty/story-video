@@ -657,3 +657,11 @@ Planned use of YouTube.js: build a Niche Radar that collects public search/chann
 - Measured delivery: 35.133s, 1920x1080, 30fps, H.264 video with AAC audio. OpenMontage final review passed and subtitle coverage was 1.0.
 - `second-act-openmontage-hybrid-v4-draft35.mp4` is an experimental alternate opening, not the accepted version. Its mediator-office opening had a less natural face/eye result in visual QA, so do not use it as the basis for production.
 - Semantic QA passes for the v3 plan in non-strict mode; the remaining bare stock IDs in beats 03-15 are warnings. Convert them to explicit semantic-role objects before any full-length render, then run QA with `--strict-semantics`.
+
+## 23. Semantic plan v2 + hybrid V5 visual QA - 2026-08-28
+
+- Added the tracked, reusable semantic plan: `examples/second-act-gray-divorce.semantic-plan.v2.json`. All 15 beats now use explicit clip objects with a role; clear-face protagonist shots remain PhotoMaker-to-LTX assets, while stock is labelled as environment, object, hands, silhouette, or supporting coverage.
+- Strict semantic QA passes with zero errors and zero warnings: `python scripts/second-act-plan-qa.py --plan examples/second-act-gray-divorce.semantic-plan.v2.json --strict`.
+- Rendered and visually accepted the 35-second verification draft: `out/second-act/divorced-at-63-with-no-retirement-how-i-rebuilt-my-life-from/second-act-openmontage-hybrid-v5-semantic-draft35.mp4`.
+- V5 technical review passed: 35.13s, 1920x1080, 30fps, H.264 + AAC, subtitle coverage 1.0. Visual review found stable identity in the two AI protagonist shots, legible subtitles, and no visible identity/hand/overlay issue in the draft.
+- Before a full-length render, visually review all stock clips marked `supporting` and replace any that could be read as the protagonist with PhotoMaker-to-LTX coverage or non-face stock alternatives.

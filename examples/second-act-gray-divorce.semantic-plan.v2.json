@@ -1,0 +1,88 @@
+{
+  "version": "2.0",
+  "semantic_contract_version": 2,
+  "strategy": "hybrid-stock-ltx-ai",
+  "protagonist": {
+    "gender": "female",
+    "age": 63,
+    "identity_policy": "Use PhotoMaker-to-LTX for clear-face protagonist shots. Stock footage may only provide environment, object, hands, silhouette, or supporting coverage unless continuity is explicitly approved."
+  },
+  "render_runtime": "ffmpeg",
+  "beats": [
+    { "id": "beat-01", "clips": [
+      { "type": "ai_generate", "id": "apartment-opening-v2-5s", "reference": "protagonist/scenes/apartment-opening-v2.png", "duration": 5.0, "seed": 73202, "prompt": "The same sixty-three-year-old woman stands quietly in her modest apartment after divorce. She takes one slow breath, blinks naturally, and shifts her gaze slightly toward the window. Preserve her mature face, silver-gray hair, navy cardigan and cream blouse. Very subtle documentary motion, stable camera, hands remain outside frame, no other people, no text, no logos.", "role": "protagonist", "identity_source": "protagonist-reference.png", "output": "ai/apartment-opening-v2-5s.mp4" },
+      { "type": "stock", "id": "pexels_8135578", "role": "environment" },
+      { "type": "stock", "id": "pexels_9574129", "role": "object" }
+    ] },
+    { "id": "beat-02", "clips": [
+      { "type": "stock", "id": "pexels_8471103", "role": "environment" },
+      { "type": "stock", "id": "pexels_7947403", "role": "object" },
+      { "type": "ai_generate", "id": "office-smoke-5s", "role": "protagonist", "identity_source": "protagonist-reference.png", "reference": "protagonist/scenes/office-smoke.png", "output": "ai/office-smoke-5s.mp4", "duration": 5.0, "seed": 73101, "prompt": "The same sixty-three-year-old American woman from the reference image sits at a financial planning desk, quietly reviewing retirement paperwork and writing notes. Preserve her mature face, silver-gray hair, navy outerwear and cream blouse. Subtle natural motion, documentary realism, soft office daylight, stable camera, no other people, no text, no logos." }
+    ] },
+    { "id": "beat-03", "clips": [
+      { "type": "stock", "id": "pexels_7463988", "role": "object" },
+      { "type": "stock", "id": "pexels_6031868", "role": "supporting" },
+      { "type": "stock", "id": "pexels_9353898", "role": "silhouette" }
+    ] },
+    { "id": "beat-04", "clips": [
+      { "type": "stock", "id": "pexels_5784035", "role": "environment" },
+      { "type": "stock", "id": "pexels_8292925", "role": "object" },
+      { "type": "stock", "id": "pexels_4146221", "role": "object" }
+    ] },
+    { "id": "beat-05", "clips": [
+      { "type": "stock", "id": "pexels_34771078", "role": "hands" },
+      { "type": "stock", "id": "pexels_7055354", "role": "object" },
+      { "type": "stock", "id": "pexels_5981290", "role": "object" }
+    ] },
+    { "id": "beat-06", "clips": [
+      { "type": "stock", "id": "pexels_7999356", "role": "environment" },
+      { "type": "stock", "id": "pexels_36392511", "role": "object" },
+      { "type": "stock", "id": "pexels_5001261", "role": "object" }
+    ] },
+    { "id": "beat-07", "clips": [
+      { "type": "stock", "id": "pexels_5971054", "role": "silhouette" },
+      { "type": "stock", "id": "pexels_33126246", "role": "hands" },
+      { "type": "stock", "id": "pexels_30673383", "role": "silhouette" }
+    ] },
+    { "id": "beat-08", "clips": [
+      { "type": "stock", "id": "pexels_5971592", "role": "silhouette" },
+      { "type": "stock", "id": "pexels_5637933", "role": "hands" },
+      { "type": "stock", "id": "pexels_8061370", "role": "hands" }
+    ] },
+    { "id": "beat-09", "clips": [
+      { "type": "stock", "id": "pexels_35666229", "role": "silhouette" },
+      { "type": "stock", "id": "pexels_7841623", "role": "object" },
+      { "type": "stock", "id": "pexels_5417876", "role": "silhouette" }
+    ] },
+    { "id": "beat-10", "clips": [
+      { "type": "stock", "id": "pexels_1793151", "role": "object" },
+      { "type": "stock", "id": "pexels_8103388", "role": "environment" },
+      { "type": "stock", "id": "pexels_8347236", "role": "supporting" }
+    ] },
+    { "id": "beat-11", "clips": [
+      { "type": "stock", "id": "pexels_6248296", "role": "supporting" },
+      { "type": "stock", "id": "pexels_7735809", "role": "object" },
+      { "type": "stock", "id": "pexels_7710340", "role": "object" }
+    ] },
+    { "id": "beat-12", "clips": [
+      { "type": "stock", "id": "pexels_10484779", "role": "silhouette" },
+      { "type": "stock", "id": "pexels_36378027", "role": "supporting" },
+      { "type": "stock", "id": "pexels_7655577", "role": "supporting" }
+    ] },
+    { "id": "beat-13", "clips": [
+      { "type": "stock", "id": "pexels_35611172", "role": "environment" },
+      { "type": "stock", "id": "pexels_8439247", "role": "supporting" },
+      { "type": "stock", "id": "pexels_8061370", "role": "hands" }
+    ] },
+    { "id": "beat-14", "clips": [
+      { "type": "stock", "id": "pexels_29199225", "role": "environment" },
+      { "type": "stock", "id": "pexels_8439245", "role": "hands" },
+      { "type": "stock", "id": "pexels_8217608", "role": "silhouette" }
+    ] },
+    { "id": "beat-15", "clips": [
+      { "type": "stock", "id": "pexels_6248325", "role": "supporting" },
+      { "type": "stock", "id": "pexels_5214749", "role": "object" },
+      { "type": "stock", "id": "pexels_4503774", "role": "object" }
+    ] }
+  ]
+}
