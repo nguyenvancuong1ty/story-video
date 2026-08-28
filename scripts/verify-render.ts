@@ -11,6 +11,7 @@ export type RenderProbeResult = {
 };
 
 export type RenderProbe = (filePath: string) => Promise<RenderProbeResult>;
+export type VerifyRenderOptions = { width?: number; height?: number; fps?: number };
 
 export const resolveFfprobeExecutable = (environment: NodeJS.ProcessEnv = process.env): string => environment.FFPROBE_PATH?.trim() || ffprobeInstaller.path;
 
@@ -25,16 +26,23 @@ const frameRate = (value: string | undefined): number => {
   return Number(numerator) / Number(denominator);
 };
 
-export const verifyRender = async (filePath: string, probe: RenderProbe = probeWithFfprobe): Promise<{ width: number; height: number; fps: number; durationSeconds: number }> => {
+export const verifyRender = async (
+  filePath: string,
+  probe: RenderProbe = probeWithFfprobe,
+  options: VerifyRenderOptions = {}
+): Promise<{ width: number; height: number; fps: number; durationSeconds: number }> => {
+  const expectedWidth = options.width ?? 1080;
+  const expectedHeight = options.height ?? 1920;
+  const expectedFps = options.fps ?? 30;
   const result = await probe(filePath);
   const video = result.streams.find((stream) => stream.codec_type === "video");
   const audio = result.streams.find((stream) => stream.codec_type === "audio");
   if (!video) throw new Error("Missing video stream");
   if (!audio) throw new Error("Missing audio stream");
-  if (video.width !== 1080 || video.height !== 1920) throw new Error(`Expected 1080x1920 video, received ${video.width ?? 0}x${video.height ?? 0}`);
+  if (video.width !== expectedWidth || video.height !== expectedHeight) throw new Error(`Expected ${expectedWidth}x${expectedHeight} video, received ${video.width ?? 0}x${video.height ?? 0}`);
 
   const fps = frameRate(video.r_frame_rate);
-  if (Math.abs(fps - 30) > 0.001) throw new Error(`Expected 30 fps, received ${video.r_frame_rate ?? "unknown"}`);
+  if (Math.abs(fps - expectedFps) > 0.001) throw new Error(`Expected ${expectedFps} fps, received ${video.r_frame_rate ?? "unknown"}`);
 
   const durationSeconds = Number(result.format.duration);
   if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) throw new Error("Missing nonzero duration");

@@ -2,7 +2,7 @@ import { Buffer } from "node:buffer";
 
 import type { ImageGenerationInput, ImageGenerationProvider, ImageGenerationResult } from "./provider.js";
 
-type LocalChatImageOptions = { baseUrl: string; model: string; maxRetries?: number; retryDelayMs?: number };
+type LocalChatImageOptions = { baseUrl: string; model: string; apiKey?: string; maxRetries?: number; retryDelayMs?: number };
 const markdownDataUrl = /!\[[^\]]*\]\((data:([^;,]+);base64,([^\s)]+))\)/s;
 
 export class LocalChatImageProvider implements ImageGenerationProvider {
@@ -13,7 +13,10 @@ export class LocalChatImageProvider implements ImageGenerationProvider {
     const maxRetries = this.options.maxRetries ?? 6;
     for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
       response = await this.fetcher(`${this.options.baseUrl.replace(/\/+$/, "")}/chat/completions`, {
-        method: "POST", headers: { "content-type": "application/json" },
+        method: "POST", headers: {
+          "content-type": "application/json",
+          ...(this.options.apiKey ? { authorization: `Bearer ${this.options.apiKey}` } : {})
+        },
         body: JSON.stringify({ model: this.options.model, modalities: ["image", "text"], messages: [{ role: "user", content: [{ type: "text", text: input.negativePrompt ? `${input.prompt}\nAvoid: ${input.negativePrompt}` : input.prompt }] }] })
       });
       if (response.ok || response.status !== 429 || attempt === maxRetries) break;
