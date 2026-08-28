@@ -22,6 +22,7 @@
     "infra:down": "docker compose -f infra/docker-compose.yml down",
     "second-act:footage": "python scripts/openmontage-retrieve.py --spec examples/second-act-gray-divorce.visual-spec.json --output out/second-act/footage",
     "second-act:pilot": "tsx scripts/run-second-act.ts",
+    "second-act:niche-radar": "node scripts/youtube-niche-radar.mjs",
     "second-act:auth": "tsx scripts/second-act-auth.ts",
     "second-act:worker": "tsx scripts/second-act-worker.ts"
   },

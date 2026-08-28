@@ -613,6 +613,14 @@ Observed proof that small channels can still break out: channels with roughly 7K
 
 Planned use of YouTube.js: build a Niche Radar that collects public search/channel/video data, detects outliers, clusters titles/topics, analyzes transcripts/comments when public, and scores content opportunities before script generation. Do not require channel login for this public research layer.
 
+### Reusable Niche Radar collector
+
+- The anonymous/public collector is now `scripts/youtube-niche-radar.mjs`, exposed as `pnpm second-act:niche-radar`.
+- Default run: `pnpm second-act:niche-radar`. It uses the eight initial Second Act query clusters; add repeatable `--query`, or use `--queries-file` (JSON array or tab-separated `cluster<TAB>query` text) to supply a different research set.
+- Other CLI options: `--limit <1-100>`, `--out <file-or-base-path>`, and `--format json|csv|both`. The default JSON report path is `out/niche-radar/youtube-niche-radar.json`; CSV uses the same base path with `.csv`.
+- JSON schema includes `schema_version`, timestamp, access mode, query sources, aggregate summary, and deduplicated `videos`. Each video carries title, video ID/URL, channel name/ID when returned, views, duration, published text, and every source cluster/query/rank. Summary includes unique video/channel counts, median views, outliers, top channels, and per-cluster breakdown.
+- Anonymous smoke test passed on 2026-08-28: `node scripts/youtube-niche-radar.mjs --query "gray divorce after 60" --limit 3 --format both --out out/niche-radar/smoke-gray-divorce.json` returned 3 videos from 3 channels. No login or YouTube Analytics API was used.
+
 ## 21. Local LTX/ComfyUI integration - 2026-08-28
 
 - ComfyUI 0.34.0 is running locally on `127.0.0.1:8188` with RTX 5060 Ti / CUDA 13.
