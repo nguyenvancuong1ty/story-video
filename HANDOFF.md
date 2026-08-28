@@ -641,3 +641,11 @@ Planned use of YouTube.js: build a Niche Radar that collects public search/chann
 - Identified `pexels_7477075` as the wrong-male continuity shot in beat-02 and replaced it with the generated protagonist finance shot.
 - Latest test render: `second-act-openmontage-hybrid-v3-draft35.mp4`, 35.07s, 1920x1080, OpenMontage final_review PASS.
 - Next: migrate remaining legacy stock entries to semantic plan v2 roles and extend PhotoMaker keyframes only to protagonist-heavy beats.
+
+## 22. Hybrid prototype visual QA - 2026-08-28
+
+- Accepted prototype: `out/second-act/divorced-at-63-with-no-retirement-how-i-rebuilt-my-life-from/second-act-openmontage-hybrid-v3-draft35.mp4`.
+- Visual review of contact frames at approximately 1, 3, 5, 9, 15, 21, 27, and 33 seconds found stable protagonist identity in the opening and finance-office AI shots; no visible extra people, hand failure, face drift, subtitle collision, or AI/stock mismatch severe enough to reject the draft.
+- Measured delivery: 35.133s, 1920x1080, 30fps, H.264 video with AAC audio. OpenMontage final review passed and subtitle coverage was 1.0.
+- `second-act-openmontage-hybrid-v4-draft35.mp4` is an experimental alternate opening, not the accepted version. Its mediator-office opening had a less natural face/eye result in visual QA, so do not use it as the basis for production.
+- Semantic QA passes for the v3 plan in non-strict mode; the remaining bare stock IDs in beats 03-15 are warnings. Convert them to explicit semantic-role objects before any full-length render, then run QA with `--strict-semantics`.
