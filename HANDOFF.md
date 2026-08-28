@@ -584,3 +584,31 @@ Planned first AI shot: realistic documentary footage of a U.S. woman around 63 i
 - Keep the machine awake while installs/renders run; display may turn off, but AC sleep should be `Never`.
 - Do not use Remote Desktop Commander's `shutdown` action as an OS shutdown command; it disconnects/stops the remote agent rather than safely powering off Windows.
 - Do not expose `.env`, OAuth tokens, API keys, or other secrets in logs or handoff updates.
+
+## 20. Niche research decision - 2026-08-28
+
+YouTube.js (`youtubei.js`) is now installed for anonymous/public YouTube research. Initial smoke test succeeded without channel login.
+
+A first niche scan covered 8 core Second Act query clusters and returned 146 unique videos from 112 unique channels. The market is fragmented rather than dominated by one or two channels. Direct story-format competition is noticeably thinner than generic retirement/advice competition.
+
+Strategic decision: keep the current channel direction. Positioning is **cinematic first-person stories about rebuilding life after 55**, not generic senior advice.
+
+Initial 20-video mix:
+
+- ~40% gray divorce / rebuilding after divorce
+- ~35% job loss / retirement reset / financial rebuilding
+- ~25% living alone / adult-child boundaries / regret / second chances
+
+Production target for real episodes should start around **18-30 minutes**. The current ~4:25 pilot is a pipeline test, not the target publishing length.
+
+Opportunity ranking from the first scan:
+
+- Gray divorce + starting-over story format: strong opportunity
+- Job loss / career reset after 55: strong opportunity
+- Living alone after 60: good opportunity
+- Retirement advice: high demand but substantially more competitive; avoid competing head-on
+- Generic reinvention/self-help: too broad; use only through a concrete character/story angle
+
+Observed proof that small channels can still break out: channels with roughly 7K-10K subscribers had individual videos around 139K-232K views in these topics. This supports a topic/packaging-led entry strategy rather than waiting for channel authority.
+
+Planned use of YouTube.js: build a Niche Radar that collects public search/channel/video data, detects outliers, clusters titles/topics, analyzes transcripts/comments when public, and scores content opportunities before script generation. Do not require channel login for this public research layer.
